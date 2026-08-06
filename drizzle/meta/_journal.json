@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786033469831,
+      "tag": "0000_freezing_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786036506652,
+      "tag": "0001_omniscient_jamie_braddock",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+﻿import assert from "node:assert/strict";
+import test from "node:test";
+import { buildAuditTimeline } from "../lib/execution/audit.ts";
+test("audit timeline includes refusal reasons", () => { const entries = buildAuditTimeline({ id: "1", agentId: "a", correlationId: "c", status: "refused", policyVerdict: { allowed: false, checks: [], reasons: [{ code: "trade_cap_exceeded", passed: false, message: "cap" }] } }); assert.equal(entries.find((entry) => entry.label === "Policy")?.detail, "trade_cap_exceeded"); assert.equal(entries.at(-1)?.state, "failed"); });
+test("audit timeline includes simulation and transaction evidence", () => { const entries = buildAuditTimeline({ id: "1", agentId: "a", correlationId: "c", status: "confirmed", policyVerdict: { allowed: true, checks: [], reasons: [] }, simulation: { status: "simulated", gasEstimate: "21000", wouldRevert: false }, keeperHubExecutionId: "kh-1", transactionHash: "0xabc" }); assert.deepEqual(entries.map((entry) => entry.label), ["Execution created", "Policy", "Simulation", "KeeperHub submission", "Transaction", "Outcome"]); });

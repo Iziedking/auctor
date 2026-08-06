@@ -1,4 +1,4 @@
-// KeeperHub MCP HTTP contract. Verified against https://app.keeperhub.com/mcp
+﻿// KeeperHub MCP HTTP contract. Verified against https://app.keeperhub.com/mcp
 // through captured responses; this harness deliberately preserves raw payloads.
 // Read 2026-08-06. No KeeperHub SDK was available.
 
@@ -100,7 +100,7 @@ async function sendMcpRequest(
     throw new Error(`KeeperHub MCP ${request.method} failed with HTTP ${response.status}: ${body}`);
   }
 
-  return { body, sessionId: nextSessionId, status: response.status };
+  return nextSessionId ? { body, sessionId: nextSessionId, status: response.status } : { body, status: response.status };
 }
 
 async function loadToolCalls(): Promise<ToolCall[]> {
@@ -127,11 +127,13 @@ function parseToolCall(value: unknown, index: number): ToolCall {
   if (value.arguments !== undefined && !isRecord(value.arguments)) {
     throw new Error(`Tool call ${index} arguments must be an object.`);
   }
-  return {
+  const call: ToolCall = {
     name: value.name,
     fixture: safeFixtureName(value.fixture),
-    arguments: value.arguments as { [key: string]: JsonValue } | undefined,
   };
+  return value.arguments === undefined
+    ? call
+    : { ...call, arguments: value.arguments as { [key: string]: JsonValue } };
 }
 
 function safeFixtureName(value: string): string {
@@ -152,3 +154,4 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isMissingFileError(error: unknown): boolean {
   return isRecord(error) && error.code === "ENOENT";
 }
+
