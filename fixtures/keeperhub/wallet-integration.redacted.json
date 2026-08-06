@@ -1,0 +1,5 @@
+﻿{
+  "source": { "operations": ["list_integrations", "get_wallet_integration"], "capturedAt": "2026-08-06", "rawFixture": "raw/list-integrations.json" },
+  "wallet": { "type": "web3", "address": "0xeDd7A8cdE35Dd2d30d821861e52bF9329c165386", "managed": false, "provider": "Turnkey", "custody": "non-custodial", "keyProtection": "secure enclave", "signingMode": "hosted unattended signing" },
+  "redacted": ["integration id", "creator name", "creator email", "creator role"]
+}

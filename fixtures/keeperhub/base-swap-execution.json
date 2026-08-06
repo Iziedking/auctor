@@ -1,0 +1,6 @@
+﻿{
+  "source":{"operation":"execute_contract_call + get_direct_execution_status","capturedAt":"2026-08-06","executionId":"npq7y844bbsuh18vtw8he","readOnly":false,"approval":"explicit user approval"},
+  "request":{"chainId":"8453","contractAddress":"0x2626664c2603336E57B271c5C0b26F421741e481","functionName":"exactInputSingle","tokenIn":"0x4200000000000000000000000000000000000006","tokenOut":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913","amountIn":"1000000000000000","amountOutMinimum":"1873919","fee":"500","value":"0.001","gasLimitMultiplier":"1.5"},
+  "simulation":{"status":"simulated","gasEstimate":"160896","simulatedReturnValue":"1902600","wouldRevert":false},
+  "terminal":{"status":"completed","transactionHash":"0x19e16696bf6172c5f232d1d11465f921380650cf3c870504d84e3114e9b30893","transactionLink":"https://basescan.org/tx/0x19e16696bf6172c5f232d1d11465f921380650cf3c870504d84e3114e9b30893","sponsored":true,"verified":true,"receiptStatus":"success","blockNumber":49618673,"gasUsed":"192461","retryCount":0}
+}

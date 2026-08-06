@@ -1,0 +1,1 @@
+﻿{"source":{"operation":"search_protocol_actions","arguments":{"protocol":"uniswap"},"capturedAt":"2026-08-06"},"count":11,"swapActions":["uniswap/swap-exact-input","uniswap/swap-exact-output","uniswap/quote-exact-input","uniswap/quote-exact-output","uniswap/get-pool"],"firstSwapChoice":"uniswap/swap-exact-input"}

@@ -1,0 +1,6 @@
+﻿{
+  "source":{"operation":"execute_protocol_action","actionType":"uniswap/quote-exact-input","capturedAt":"2026-08-06","readOnly":true},
+  "request":{"network":"8453","tokenIn":"0x4200000000000000000000000000000000000006","tokenOut":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913","amountIn":"1000000000000000","fee":"500","sqrtPriceLimitX96":"0"},
+  "result":{"amountOut":"1892848","sqrtPriceX96After":"3447832466706817175986175","initializedTicksCrossed":"1","gasEstimate":"71971"},
+  "schemaTrap":{"documented":"sqrtPriceLimitX96 optional","observed":"omitting it failed because uint160 was missing"}
+}

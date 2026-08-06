@@ -1,0 +1,7 @@
+﻿{
+  "source":{"operation":"execute_workflow + get_execution","capturedAt":"2026-08-06","workflowId":"ywic027myalkfft53k6ea","executionId":"f8m59dfwqlsy11qymv6mm","readOnly":true},
+  "status":"success",
+  "balances":{"base":{"chainId":"8453","balance":"0.0105","balanceWei":"10500000000000000"},"ethereum":{"chainId":"1","balance":"0.0","balanceWei":"0"}},
+  "transactionHashes":[],
+  "audit":{"trigger":"manual","completedSteps":3,"onchainReceipts":[]}
+}

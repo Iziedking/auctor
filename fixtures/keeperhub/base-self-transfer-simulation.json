@@ -1,0 +1,1 @@
+﻿{"source":{"operation":"execute_transfer","capturedAt":"2026-08-06","broadcast":false},"request":{"chain_id":"8453","to_address":"0xeDd7A8cdE35Dd2d30d821861e52bF9329c165386","amount":"0","simulate":true},"result":{"status":"simulated","gasEstimate":"21000","wouldRevert":false}}

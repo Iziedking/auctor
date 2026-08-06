@@ -1,0 +1,18 @@
+﻿# Local credentials and operator inputs are never committed.
+.env
+.env.local
+scripts/keeperhub-calls.json
+
+# Tool output may contain account data. Review and redact it before promoting a
+# response into a tracked fixture.
+fixtures/keeperhub/raw/
+
+node_modules/
+npm-debug.log*
+
+# Local agent configuration and planning artifacts.
+.codex/
+.firecrawl/
+PLAN.md
+.playwright-mcp/
+

@@ -1,0 +1,7 @@
+[
+  {
+    "name": "replace_with_name_from_tools_list",
+    "arguments": {},
+    "fixture": "replace-with-purpose.json"
+  }
+]

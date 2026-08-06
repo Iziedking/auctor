@@ -1,0 +1,13 @@
+﻿{
+    "name":  "auctor",
+    "version":  "0.0.0",
+    "private":  true,
+    "type":  "module",
+    "engines":  {
+                    "node":  "\u003e=22.6.0"
+                },
+    "scripts":  {
+                    "verify:keeperhub":  "node --experimental-strip-types scripts/verify-keeperhub.ts",
+                    "test":  "node --experimental-strip-types test/config.test.ts"
+                }
+}

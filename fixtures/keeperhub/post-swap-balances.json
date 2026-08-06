@@ -1,0 +1,1 @@
+﻿{"source":{"operation":"execute_workflow + get_execution + execute_contract_call view","capturedAt":"2026-08-06","executionId":"94s6lsv8erv56w886a9zo"},"postSwap":{"baseEth":{"balance":"0.0095","balanceWei":"9500000000000000"},"ethereumEth":{"balance":"0.0","balanceWei":"0"},"usdc":{"balanceRaw":"1901679","decimals":6,"approximate":"1.901679"}},"transactionHashes":[]}

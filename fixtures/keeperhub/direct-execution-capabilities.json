@@ -1,0 +1,12 @@
+﻿{
+  "source": { "operation": "tools/list", "capturedAt": "2026-08-06", "rawFixture": "raw/tools-list.json" },
+  "tools": {
+    "execute_contract_call": {
+      "supports": ["arbitrary EVM contract address and function name", "JSON-encoded function arguments", "caller-supplied ABI or verified-contract ABI lookup", "payable native value", "gas limit multiplier", "priority fee override", "simulation without signing or broadcasting", "24-hour idempotency key"],
+      "required": ["contract_address", "chain_id", "function_name"]
+    },
+    "get_direct_execution_status": { "required": ["execution_id"], "purpose": "Poll a transfer or contract-call execution for terminal status and transaction data." },
+    "execute_workflow": { "purpose": "Accept a manual workflow trigger and return a running execution id." },
+    "get_execution": { "purpose": "Return authoritative workflow status and step logs with onchain-reconciled transaction receipts." }
+  }
+}
