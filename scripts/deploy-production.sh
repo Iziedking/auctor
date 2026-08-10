@@ -12,6 +12,7 @@ test -f .env
 
 docker pull "$image"
 AUCTOR_IMAGE="$image" docker compose --env-file .env -f docker-compose.prod.yml config >/dev/null
-AUCTOR_IMAGE="$image" docker compose --env-file .env -f docker-compose.prod.yml up -d --no-build --wait
+AUCTOR_IMAGE="$image" docker compose --env-file .env -f docker-compose.prod.yml run --rm migrate
+AUCTOR_IMAGE="$image" docker compose --env-file .env -f docker-compose.prod.yml up -d --no-build --no-deps --wait app
 
 curl --fail --silent --show-error https://api.auctor.space/api/health

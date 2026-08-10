@@ -4,6 +4,8 @@ services:
     image: ${AUCTOR_IMAGE:?AUCTOR_IMAGE is required}
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgres://auctor:${POSTGRES_PASSWORD}@postgres:5432/auctor
     command: ["npx", "drizzle-kit", "migrate"]
     restart: "no"
     networks:
@@ -14,12 +16,11 @@ services:
     container_name: auctor-app
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgres://auctor:${POSTGRES_PASSWORD}@postgres:5432/auctor
     restart: unless-stopped
     expose:
       - "3200"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3200/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 10s
