@@ -34,7 +34,7 @@ export function ChatWorkspace() {
   const [health, setHealth] = useState<Health | null>(null);
 
   useEffect(() => {
-    fetch("/api/health")
+    fetch("/backend/api/health")
       .then((response) => response.ok ? response.json() : null)
       .then((value) => setHealth(value as Health | null))
       .catch(() => setHealth(null));
@@ -48,7 +48,7 @@ export function ChatWorkspace() {
     setApproval(null);
     try {
       const payload = { text: command, correlationId: "chat-" + Date.now(), ...(conversationId ? { conversationId } : {}) };
-      const response = await fetch("/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      const response = await fetch("/backend/api/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       const next = await response.json() as ChatResult;
       setResult(next);
       setSubmittedText(command);
@@ -63,7 +63,7 @@ export function ChatWorkspace() {
     setApproving(true);
     setApproval(null);
     try {
-      const response = await fetch("/api/chat/approve", {
+      const response = await fetch("/backend/api/chat/approve", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: submittedText, correlationId: "approval-" + Date.now(), recalledMemory: result.recalledMemory ?? [] }),
