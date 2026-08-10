@@ -1,4 +1,4 @@
-﻿import type { Result } from "../result.ts";
+import type { Result } from "../result.ts";
 
 export type Address = `0x${string}`;
 
@@ -17,6 +17,7 @@ export interface ExecutionRequest {
 export interface Simulation {
   readonly status: "simulated";
   readonly gasEstimate: string;
+  readonly simulatedReturnValue?: string;
   readonly wouldRevert: boolean;
   readonly revertReason?: string;
 }

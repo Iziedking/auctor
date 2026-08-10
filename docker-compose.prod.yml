@@ -1,0 +1,39 @@
+name: auctor
+services:
+  migrate:
+    image: ${AUCTOR_IMAGE:?AUCTOR_IMAGE is required}
+    env_file:
+      - .env
+    command: ["npx", "drizzle-kit", "migrate"]
+    restart: "no"
+    networks:
+      - internal
+
+  app:
+    image: ${AUCTOR_IMAGE:?AUCTOR_IMAGE is required}
+    container_name: auctor-app
+    env_file:
+      - .env
+    restart: unless-stopped
+    expose:
+      - "3200"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3200/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+    networks:
+      - internal
+      - ingress
+
+networks:
+  internal:
+    external: true
+    name: auctor_internal
+  ingress:
+    external: true
+    name: deploy_default

@@ -3,22 +3,33 @@ type Provider = "anthropic" | "openrouter" | "ollama";
 export interface Config {
   readonly capabilities: Readonly<Record<Capability, boolean>>;
   readonly database: { readonly url: string | null };
-  readonly keeperhub: { readonly baseUrl: string; readonly apiKey: string | null; readonly orgId: string | null };
+  readonly keeperhub: { readonly baseUrl: string; readonly apiKey: string | null; readonly orgId: string | null; readonly walletAddress: string | null };
   readonly memory: { readonly url: string };
   readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
   readonly mockMode: boolean;
+  readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
+  readonly notifications: { readonly telegramToken: string | null };
 }
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+export function runtimeEnvironment(): Readonly<Record<string, string | undefined>> {
+  const runtimeProcess = Reflect.get(globalThis, "process") as NodeJS.Process | undefined;
+  return runtimeProcess?.env ?? {};
+}
+
+export function loadConfig(env: Readonly<Record<string, string | undefined>> = runtimeEnvironment()): Config {
   const mockMode = env.AUCTOR_MOCK_MODE === "1";
   const apiKey = optional(env.KEEPERHUB_ACME_API_KEY);
   const provider = parseProvider(env.LLM_PROVIDER);
   const llmKey = provider === "anthropic" ? optional(env.ANTHROPIC_API_KEY) : provider === "openrouter" ? optional(env.OPENROUTER_API_KEY) : null;
+  const agentId = optional(env.AUCTOR_AGENT_ID);
+  const memoryUser = optional(env.AGENT_MEMORY_USER);
+  const memoryPassphrase = optional(env.AGENT_MEMORY_PASSPHRASE);
+  const memoryEnabled = agentId !== null && memoryUser !== null && memoryPassphrase !== null;
   return {
     capabilities: {
       database: optional(env.DATABASE_URL) !== null,
       execution: mockMode || apiKey !== null,
-      memory: optional(env.AGENT_MEMORY_URL) !== null,
+      memory: memoryEnabled,
       research: optional(env.FIRECRAWL_API_KEY) !== null,
       x402: mockMode || apiKey !== null,
       telegram: optional(env.TELEGRAM_BOT_TOKEN) !== null,
@@ -27,11 +38,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       llm: mockMode || llmKey !== null || provider === "ollama",
     },
     database: { url: optional(env.DATABASE_URL) },
-    keeperhub: { baseUrl: env.KEEPERHUB_BASE_URL?.trim() || "https://app.keeperhub.com", apiKey, orgId: optional(env.KEEPERHUB_ORG_ID) },
+    keeperhub: { baseUrl: env.KEEPERHUB_BASE_URL?.trim() || "https://app.keeperhub.com", apiKey, orgId: optional(env.KEEPERHUB_ORG_ID), walletAddress: optional(env.KEEPERHUB_WALLET_ADDRESS) },
     memory: { url: env.AGENT_MEMORY_URL?.trim() || "http://127.0.0.1:4000" },
     llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
     mockMode,
+    agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
+    notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },
   };
 }
 function optional(value: string | undefined): string | null { return value?.trim() || null; }

@@ -1,0 +1,1 @@
+﻿export default function Loading(){return <div className="auditPage" aria-busy="true"><div className="skeleton wide"/><div className="skeleton filtersSkeleton"/><div className="workspace"><div className="skeleton listSkeleton"/><div className="skeleton detailSkeleton"/></div><span className="srOnly">Loading audit trail</span></div>}

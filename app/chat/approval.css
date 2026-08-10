@@ -1,0 +1,52 @@
+.approvalPanel,
+.approvalResult {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #cbd0ca;
+}
+
+.approvalPanel b,
+.approvalResult b {
+  color: #8a5a10;
+  font: 10px var(--tech-mono);
+  letter-spacing: .12em;
+}
+
+.approvalPanel button {
+  display: block;
+  margin-top: 12px;
+  border: 1px solid #8a5a10;
+  border-radius: 2px;
+  padding: 11px 14px;
+  background: #fff8e5;
+  color: #5c3b09;
+  font: 11px var(--tech-mono);
+  letter-spacing: .06em;
+}
+
+.approvalPanel button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+.approvalPanel small {
+  display: block;
+  margin-top: 9px;
+  color: #68706b;
+  font: 10px var(--tech-mono);
+}
+
+.approvalResult.executed {
+  border-top-color: #147a52;
+}
+
+.approvalResult.refused,
+.approvalResult.error {
+  border-top-color: #b43d36;
+}
+
+@media (max-width: 560px) {
+  .approvalPanel button {
+    width: 100%;
+  }
+}

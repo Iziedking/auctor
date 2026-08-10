@@ -28,3 +28,13 @@ test("database capability requires an explicit URL", () => {
   assert.equal(config.capabilities.database, true);
   assert.equal(config.database.url, "postgres://localhost/auctor");
 });
+test("server-only agent identity requires an id and complete memory credentials", () => {
+  const config = loadConfig({ AUCTOR_AGENT_ID: "agent-1", AGENT_MEMORY_USER: "user@example.com", AGENT_MEMORY_PASSPHRASE: "secret", AGENT_MEMORY_FOLDER: "project-x" });
+  assert.deepEqual(config.agent, { id: "agent-1", memoryUser: "user@example.com", memoryPassphrase: "secret", memoryFolder: "project-x" });
+  assert.equal(config.capabilities.memory, true);
+});
+
+test("KeeperHub wallet address is loaded for live trade previews", () => {
+  const walletAddress = "0xeDd7A8cdE35Dd2d30d821861e52bF9329c165386";
+  assert.equal(loadConfig({ KEEPERHUB_WALLET_ADDRESS: walletAddress }).keeperhub.walletAddress, walletAddress);
+});

@@ -1,0 +1,2 @@
+.railLink:first-child:not(.active){color:#66706a;border-left:0;padding-left:4px}
+.railLink.active{color:#f4f3ee;border-left:2px solid #25a3b7;padding-left:10px}

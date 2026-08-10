@@ -1,4 +1,4 @@
-﻿// KeeperHub REST contract. Verified 2026-08-06 against:
+// KeeperHub REST contract. Verified 2026-08-06 against:
 // https://docs.keeperhub.com/api/direct-execution and captured P0 fixtures.
 
 import { z } from "zod";
@@ -18,6 +18,7 @@ export type { KeeperHubClient } from "./types.ts";
 const simulationSchema = z.object({
   status: z.literal("simulated"),
   gasEstimate: z.string(),
+  simulatedReturnValue: z.string().optional(),
   wouldRevert: z.boolean(),
   revertReason: z.string().optional(),
 });
@@ -165,6 +166,7 @@ function parseSimulation(value: unknown): Result<Simulation, ExecError> {
     status: "simulated",
     gasEstimate: parsed.data.gasEstimate,
     wouldRevert: parsed.data.wouldRevert,
+    ...(parsed.data.simulatedReturnValue ? { simulatedReturnValue: parsed.data.simulatedReturnValue } : {}),
   };
   return typeof parsed.data.revertReason === "string"
     ? ok({ ...simulation, revertReason: parsed.data.revertReason })

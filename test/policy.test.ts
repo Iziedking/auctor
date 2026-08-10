@@ -45,3 +45,11 @@ test("an allowed trade returns every passing check", () => {
 test("invalid slippage configuration is rejected", () => {
   assert.throws(() => evaluatePolicy(input, { ...rules, maxSlippageBps: 10_001n }), /cannot exceed/);
 });
+
+test("agent policy settings resolve to deterministic engine rules", async () => {
+  const { resolvePolicyRules } = await import("../lib/policy/agent-rules.ts");
+  const resolved = resolvePolicyRules({ emergencyStop: false, allowedChains: ["8453"], allowedTokens: ["ETH", "USDC"], perTradeCapUsd: "5.25", dailyCapUsd: "20", maxSlippageBps: 75, approvalMode: "approve" });
+  assert.equal(resolved.maxTradeUsdMicros, 5_250_000n);
+  assert.equal(resolved.maxDailyUsdMicros, 20_000_000n);
+  assert.equal(resolved.approvalMode, "human");
+});

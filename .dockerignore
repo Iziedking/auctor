@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+test-results
+.playwright-mcp
+.superpowers
+.codex
+.firecrawl
+.memory-sidecar-data
+.env
+.env.*
+!.env.example
+npm-debug.log*

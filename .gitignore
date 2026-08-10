@@ -1,4 +1,4 @@
-﻿# Local credentials and operator inputs are never committed.
+# Local credentials and operator inputs are never committed.
 .env
 .env.local
 scripts/keeperhub-calls.json
@@ -16,3 +16,13 @@ npm-debug.log*
 PLAN.md
 .playwright-mcp/
 
+.superpowers/
+.memory-sidecar-data/
+.next/
+.vercel
+
+RUNBOOK.md
+SUBMISSION.md
+test-results/
+tsconfig.tsbuildinfo
+docs/superpowers/

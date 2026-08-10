@@ -1,0 +1,4 @@
+﻿import assert from"node:assert/strict";import test from"node:test";import{createFixtureAuditSource}from"../lib/audit/source.ts";import{explorerUrl}from"../lib/audit/explorer.ts";
+test("audit source filters refusals",async()=>{const r=await createFixtureAuditSource().list({status:"refused"});assert.equal(r.kind,"ready");if(r.kind==="ready")assert.deepEqual(r.value.map(x=>x.id),["refused-over-cap"])});
+test("audit source reports missing and unavailable",async()=>{assert.equal((await createFixtureAuditSource().get("missing")).kind,"not_found");assert.equal((await createFixtureAuditSource(false).list({})).kind,"unavailable")});
+test("audit explorer links are chain aware",()=>{assert.equal(explorerUrl("8453","0xabc"),"https://basescan.org/tx/0xabc");assert.equal(explorerUrl("1","0xabc"),"https://etherscan.io/tx/0xabc")});

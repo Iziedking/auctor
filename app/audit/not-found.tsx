@@ -1,0 +1,1 @@
+﻿import Link from"next/link";export default function NotFound(){return <div className="unavailable"><h1>Execution not found</h1><p>This audit ID does not exist or is no longer available.</p><Link href="/audit">Return to audit trail</Link></div>}

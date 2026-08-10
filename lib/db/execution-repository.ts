@@ -31,6 +31,7 @@ export function createDrizzleExecutionRepository(db: Database): ExecutionReposit
         policyVerdict: "refused",
         policyDetail: {},
         intent: input.intent,
+        recalledMemory: input.recalledMemory ?? [],
         chainId: input.chainId,
         status: "pending",
       }).onConflictDoNothing({ target: [executions.agentId, executions.correlationId] }).returning();
@@ -84,6 +85,7 @@ function toAudit(row: ExecutionRow): ExecutionAudit {
     agentId: row.agentId,
     correlationId: row.correlationId,
     status: row.status as ExecutionAudit["status"],
+    ...(Array.isArray(row.recalledMemory) ? { recalledMemory: row.recalledMemory.filter((item): item is string => typeof item === "string") } : {}),
     ...(verdict ? { policyVerdict: verdict } : {}),
     ...(simulation ? { simulation } : {}),
     ...(row.khExecutionId ? { keeperHubExecutionId: row.khExecutionId } : {}),

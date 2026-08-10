@@ -1,0 +1,4 @@
+﻿import type { AuditDetail } from "../../lib/audit/types";
+export function ProvenanceInspector({ audit }: { audit: AuditDetail }) {
+  return <aside className="provenanceInspector" aria-label="Provenance inspector"><div className="inspectorHeading"><span>PROVENANCE</span><b>INSPECTOR</b></div><dl><div><dt>Source</dt><dd>Fixture evidence registry</dd></div><div><dt>Captured</dt><dd>{new Date(audit.createdAt).toISOString()}</dd></div><div><dt>Verification</dt><dd>{audit.transactionHash ? "Receipt and explorer cross-check" : "Policy evaluation record"}</dd></div><div><dt>Integrity</dt><dd>{audit.transactionHash ? "RECEIPT VERIFIED" : "EVIDENCE RECORDED"}</dd></div><div><dt>Related ID</dt><dd><code>{audit.keeperHubExecutionId ?? audit.correlationId}</code></dd></div></dl><details><summary>DISCLOSE RAW EVIDENCE</summary><pre>{JSON.stringify(audit.evidence, null, 2)}</pre></details></aside>;
+}
