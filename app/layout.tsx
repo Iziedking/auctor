@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
 
-import { AppShell } from "../components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.auctor.space"),
+  metadataBase: new URL("https://auctor.space"),
   title: {
     default: "Auctor - Intelligent Capital",
     template: "%s - Auctor",
@@ -49,9 +48,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <AppShell>{children}</AppShell>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

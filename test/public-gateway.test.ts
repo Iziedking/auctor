@@ -1,0 +1,3 @@
+import assert from"node:assert/strict";import{readFile}from"node:fs/promises";import{test}from"node:test";const read=(path:string)=>readFile(new URL(`../${path}`,import.meta.url),"utf8");
+test("public login contains wallet and email entry without telemetry",async()=>{const card=await read("components/auth/login-card.tsx");assert.match(card,/Continue with wallet/);assert.match(card,/Email me a sign-in link/);assert.doesNotMatch(card,/SYSTEM \/ LIVE|AUDIT|MEMORY/)});
+test("root renders the public gateway instead of redirecting to Audit",async()=>{const page=await read("app/page.tsx");assert.match(page,/PublicGateway/);assert.doesNotMatch(page,/redirect\("\/audit"\)/)});

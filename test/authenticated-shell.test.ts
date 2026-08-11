@@ -1,0 +1,2 @@
+import assert from "node:assert/strict";import{readFile}from"node:fs/promises";import{test}from"node:test";const read=(path:string)=>readFile(new URL(`../${path}`,import.meta.url),"utf8");
+test("root stays public while product pages require a session and render the shell",async()=>{assert.doesNotMatch(await read("app/layout.tsx"),/AppShell/);for(const path of["app/agent/page.tsx","app/chat/page.tsx","app/audit/page.tsx"]){const source=await read(path);assert.match(source,/requireServerSession/);assert.match(source,/AppShell/)}});

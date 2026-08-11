@@ -37,3 +37,5 @@ import "./siwe.test.ts";
 import "./wallet-client.test.ts";
 import "./auth-http-json.test.ts";
 import "./auth-redirect.test.ts";
+import "./authenticated-shell.test.ts";
+import "./public-gateway.test.ts";
