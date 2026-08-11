@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createRuntimeChatPipeline } from "../lib/chat/runtime-pipeline.ts";
 import type { KeeperHubClient } from "../lib/keeperhub/types.ts";
+import { readFile } from "node:fs/promises";
 const walletAddress = "0xeDd7A8cdE35Dd2d30d821861e52bF9329c165386" as const;
 test("live runtime chat uses the real KeeperHub client factory", async () => {
   let realClients = 0; let mockClients = 0;
@@ -11,3 +12,4 @@ test("live runtime chat uses the real KeeperHub client factory", async () => {
   assert.equal(result.kind, "preview"); assert.equal(realClients, 1); assert.equal(mockClients, 0);
 });
 test("live runtime chat fails closed when its wallet is not configured", () => { assert.throws(() => createRuntimeChatPipeline({ mockMode: false, keeperhub: { baseUrl: "https://keeperhub.example", apiKey: "secret", walletAddress: null } }), /KEEPERHUB_WALLET_ADDRESS/); });
+test("authenticated chat binds simulation to the provisioned agent wallet",async()=>{const source=await readFile(new URL("../app/api/chat/route.ts",import.meta.url),"utf8");assert.match(source,/walletAddress:session\.khWalletAddress/)});
