@@ -58,6 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - uses: actions/checkout@v4
       - name: Configure SSH
         shell: bash
         env:
@@ -84,3 +85,7 @@ jobs:
           token_b64="$(printf '%s' "$GHCR_TOKEN" | base64 -w0)"
           ssh -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" \
             "printf '%s' '$token_b64' | base64 -d | docker login ghcr.io -u '$GHCR_USER' --password-stdin >/dev/null && cd /opt/auctor && git fetch origin '$REVISION' && git checkout --detach --force '$REVISION' && bash scripts/deploy-production.sh '$REVISION' '$IMAGE'"
+      - name: Smoke public authentication gateway
+        env:
+          AUCTOR_PUBLIC_URL: https://auctor.space
+        run: node scripts/smoke-auth-gateway.mjs

@@ -1,0 +1,2 @@
+import assert from"node:assert/strict";import{readFile}from"node:fs/promises";import{test}from"node:test";const read=(path:string)=>readFile(new URL(`../${path}`,import.meta.url),"utf8");
+test("application installs RainbowKit providers and uses its connect modal",async()=>{assert.match(await read("components/web3/providers.tsx"),/RainbowKitProvider/);assert.match(await read("components/auth/wallet-access-button.tsx"),/ConnectButton\.Custom/);assert.match(await read("app/layout.tsx"),/Web3Providers/)});
