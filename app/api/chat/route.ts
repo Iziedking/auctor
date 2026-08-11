@@ -1,41 +1,14 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { handleChatRequest } from "../../../lib/chat/api.ts";
-
-import { createChatSession } from "../../../lib/chat/pipeline.ts";
-import { createMemoryClient } from "../../../lib/memory/client.ts";
+import { deriveMemoryIdentity } from "../../../lib/auth/memory-identity.ts";
+import { hashToken } from "../../../lib/auth/email.ts";
 import { loadConfig, runtimeEnvironment } from "../../../lib/config.ts";
 import { createDatabase } from "../../../lib/db/client.ts";
+import { resolveSession } from "../../../lib/db/auth-repository.ts";
 import { createDrizzleConversationRepository } from "../../../lib/db/conversation-repository.ts";
 import { createConversationService } from "../../../lib/chat/conversation-service.ts";
+import { handleChatRequest } from "../../../lib/chat/api.ts";
+import { createChatSession } from "../../../lib/chat/pipeline.ts";
+import { createMemoryClient } from "../../../lib/memory/client.ts";
 import { createRuntimeChatPipeline } from "../../../lib/chat/runtime-pipeline.ts";
-
-
-export async function POST(request: Request) {
-  const config = loadConfig(runtimeEnvironment());
-  const pipeline = createRuntimeChatPipeline(config);
-  const memory = config.capabilities.memory ? createMemoryClient({ baseUrl: config.memory.url }) : null;
-  const session = memory ? createChatSession({ pipeline, memory }) : null;
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
-  }
-  const identity = session && config.agent.memoryUser && config.agent.memoryPassphrase
-    ? { session, identity: { user: config.agent.memoryUser, passphrase: config.agent.memoryPassphrase, folder: config.agent.memoryFolder } }
-    : {};
-  if (config.database.url && config.agent.id) {
-    const database = createDatabase(config.database.url);
-    try {
-      const conversation = createConversationService({ repository: createDrizzleConversationRepository(database.db), pipeline });
-      const response = await handleChatRequest(body, { pipeline, ...identity, conversation, agentId: config.agent.id });
-      return NextResponse.json(response.body, { status: response.status });
-    } catch {
-      return NextResponse.json({ error: "persistence_unavailable" }, { status: 503 });
-    } finally {
-      await database.close();
-    }
-  }
-  const response = await handleChatRequest(body, { pipeline, ...identity });
-  return NextResponse.json(response.body, { status: response.status });
-}
+export async function POST(request:Request){const config=loadConfig(runtimeEnvironment());const token=(await cookies()).get("auctor_session")?.value;if(!token)return NextResponse.json({error:"unauthorized"},{status:401});if(!config.database.url||!config.agent.memoryPassphrase)return NextResponse.json({error:"agent_unavailable"},{status:503});const database=createDatabase(config.database.url);try{const session=await resolveSession(database.db,hashToken(token));if(!session)return NextResponse.json({error:"unauthorized"},{status:401});if(!session.khOrgId||!session.khWalletAddress)return NextResponse.json({error:"wallet_not_provisioned"},{status:503});let body:unknown;try{body=await request.json()}catch{return NextResponse.json({error:"invalid_json"},{status:400})}const pipeline=createRuntimeChatPipeline(config);const identity=deriveMemoryIdentity({userId:session.userId,memoryKey:session.memoryKey,masterPassphrase:config.agent.memoryPassphrase,folder:`agent-${session.agentId}`});const memory=createMemoryClient({baseUrl:config.memory.url});const chatSession=createChatSession({pipeline,memory});const conversation=createConversationService({repository:createDrizzleConversationRepository(database.db),pipeline});const response=await handleChatRequest(body,{pipeline,session:chatSession,identity,conversation,agentId:session.agentId});return NextResponse.json(response.body,{status:response.status})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"chat_unavailable"},{status:503})}finally{await database.close()}}

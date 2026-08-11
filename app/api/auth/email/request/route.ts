@@ -1,0 +1,7 @@
+import { NextResponse } from "next/server";
+import { loadConfig, runtimeEnvironment } from "../../../../../lib/config.ts";
+import { createDatabase } from "../../../../../lib/db/client.ts";
+import { createDrizzleAuthRepository } from "../../../../../lib/db/auth-repository.ts";
+import { createAuthService } from "../../../../../lib/auth/service.ts";
+import { createSendGridEmailSender } from "../../../../../lib/notifications/email.ts";
+export async function POST(request:Request){let body:unknown;try{body=await request.json()}catch{return NextResponse.json({error:"invalid_json"},{status:400})}const email=body&&typeof body==="object"&&"email" in body?(body as {email?:unknown}).email:undefined;if(typeof email!=="string")return NextResponse.json({error:"email_required"},{status:400});const config=loadConfig(runtimeEnvironment());if(!config.database.url)return NextResponse.json({error:"database_unavailable"},{status:503});const database=createDatabase(config.database.url);try{const links:string[]=[];const sender=config.mockMode?{async sendSignInLink(input:{url:string}){links.push(input.url)}}:createSendGridEmailSender({apiKey:config.email.apiKey,from:config.email.from});const auth=createAuthService({repository:createDrizzleAuthRepository(database.db),publicUrl:config.app.publicUrl,sender});await auth.requestSignIn(email);return NextResponse.json({accepted:true,...(config.mockMode?{verificationUrl:links[0]}:{})})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"invalid_email"},{status:400})}finally{await database.close()}}

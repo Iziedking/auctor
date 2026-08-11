@@ -1,0 +1,3 @@
+import { createHmac, randomUUID } from "node:crypto";
+export function createMemoryKey():string{return randomUUID();}
+export function deriveMemoryIdentity(input:{readonly userId:string;readonly memoryKey:string;readonly masterPassphrase:string;readonly folder?:string}){if(!input.masterPassphrase.trim())throw new Error("Agent memory master passphrase is required.");return{user:`auctor:${input.userId}`,passphrase:createHmac("sha256",input.masterPassphrase).update(input.memoryKey).digest("hex"),folder:input.folder??"auctor"};}

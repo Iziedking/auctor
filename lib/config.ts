@@ -10,6 +10,8 @@ export interface Config {
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
   readonly notifications: { readonly telegramToken: string | null };
+  readonly email: { readonly apiKey: string | null; readonly from: string | null };
+  readonly app: { readonly publicUrl: string };
 }
 export function runtimeEnvironment(): Readonly<Record<string, string | undefined>> {
   const runtimeProcess = Reflect.get(globalThis, "process") as NodeJS.Process | undefined;
@@ -45,6 +47,8 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },
+    email: { apiKey: optional(env.SENDGRID_API_KEY), from: optional(env.SENDGRID_FROM_EMAIL) },
+    app: { publicUrl: env.AUCTOR_PUBLIC_URL?.trim() || "https://www.auctor.space" },
   };
 }
 function optional(value: string | undefined): string | null { return value?.trim() || null; }

@@ -1,0 +1,4 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { deriveMemoryIdentity } from "../lib/auth/memory-identity.ts";
+test("memory identity is stable and isolated per user",()=>{const one=deriveMemoryIdentity({userId:"user-1",memoryKey:"key-1",masterPassphrase:"master"});const again=deriveMemoryIdentity({userId:"user-1",memoryKey:"key-1",masterPassphrase:"master"});const other=deriveMemoryIdentity({userId:"user-2",memoryKey:"key-2",masterPassphrase:"master"});assert.deepEqual(one,again);assert.notEqual(one.user,other.user);assert.notEqual(one.passphrase,other.passphrase);assert.equal(one.folder,"auctor")});

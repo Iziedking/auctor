@@ -15,6 +15,7 @@ import {
 
 export const riskProfile = pgEnum("risk_profile", ["conservative", "balanced", "aggressive"]);
 export const approvalMode = pgEnum("approval_mode", ["approve", "autonomous"]);
+export const autonomyMode = pgEnum("autonomy_mode", ["manual", "guarded", "autonomous"]);
 export const messageRole = pgEnum("message_role", ["user", "agent", "system"]);
 export const triggerKind = pgEnum("trigger_kind", ["chat", "schedule", "watch", "reconcile"]);
 export const policyVerdict = pgEnum("policy_verdict", ["allowed", "clamped", "refused"]);
@@ -23,6 +24,7 @@ export const spendKind = pgEnum("spend_kind", ["trade", "research", "gas"]);
 export const paymentProtocol = pgEnum("payment_protocol", ["x402", "mpp"]);
 export const scheduledTaskKind = pgEnum("scheduled_task_kind", ["watch", "recurring_buy", "rebalance", "briefing"]);
 export const notifyChannel = pgEnum("notify_channel", ["telegram", "email", "discord"]);
+export const channelProvider = pgEnum("channel_provider", ["telegram", "whatsapp"]);
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -30,6 +32,22 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const emailVerifications = pgTable("email_verifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const userSessions = pgTable("user_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 export const memoryIdentities = pgTable("memory_identities", {
   userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
   memoryKey: text("memory_key").notNull(),
@@ -43,6 +61,7 @@ export const agents = pgTable("agents", {
   riskProfile: riskProfile("risk_profile").notNull(),
   tradingStyle: text("trading_style").notNull(),
   approvalMode: approvalMode("approval_mode").default("approve").notNull(),
+  autonomyMode: autonomyMode("autonomy_mode").default("manual").notNull(),
   budgetUsd: numeric("budget_usd", { precision: 18, scale: 2 }).notNull(),
   dailyCapUsd: numeric("daily_cap_usd", { precision: 18, scale: 2 }).notNull(),
   perTradeCapUsd: numeric("per_trade_cap_usd", { precision: 18, scale: 2 }).notNull(),
@@ -55,6 +74,14 @@ export const agents = pgTable("agents", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const channelConnections = pgTable("channel_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  agentId: uuid("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  provider: channelProvider("provider").notNull(),
+  externalIdentity: text("external_identity").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("channel_provider_identity").on(table.provider, table.externalIdentity)]);
 export const conversations = pgTable("conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
   agentId: uuid("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),

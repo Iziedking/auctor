@@ -26,3 +26,12 @@ import "./notification-repository.test.ts";
 import './runtime-chat-pipeline.test.ts';
 
 import './brand-assets.test.ts';
+import "./auth-email.test.ts";
+import "./agent-setup.test.ts";
+import "./auth-service.test.ts";
+import "./auth-repository.test.ts";
+import "./memory-identity.test.ts";
+import "./channel-pairing.test.ts";
+import "./channel-service.test.ts";
+import "./siwe.test.ts";
+import "./wallet-client.test.ts";

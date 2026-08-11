@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getTableConfig } from "drizzle-orm/pg-core";
-import { executions, spendLedger } from "../lib/db/schema.ts";
+import { agents, emailVerifications, executions, spendLedger, userSessions } from "../lib/db/schema.ts";
 
 test("executions enforce agent-scoped correlation idempotency", () => {
   const config = getTableConfig(executions);
@@ -22,4 +22,12 @@ test("spend ledger has an agent day and kind lookup index", () => {
   const config = getTableConfig(spendLedger);
   assert.ok(config.indexes.some((item) => item.config.name === "spend_ledger_day"));
   assert.ok(config.indexes.some((item) => item.config.name === "spend_ledger_execution_kind" && item.config.unique));
+});
+
+test("email identity schema stores expiring verification and sessions", () => {
+  assert.ok(emailVerifications.tokenHash);
+  assert.ok(emailVerifications.expiresAt);
+  assert.ok(userSessions.userId);
+  assert.ok(userSessions.tokenHash);
+  assert.ok(agents.autonomyMode);
 });

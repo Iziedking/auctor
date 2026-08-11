@@ -1,0 +1,4 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { createChannelPairingService } from "../lib/auth/channel-service.ts";
+test("channel pairing issues a code and redeems through the repository",async()=>{let saved:any;const service=createChannelPairingService({now:()=>1000,repository:{async save(input){saved=input},async consume(input){assert.equal(input.provider,"telegram");assert.equal(input.externalIdentity,"12345");assert.equal(input.codeHash,saved.codeHash);return{userId:saved.userId,agentId:saved.agentId}}}});const issued=await service.issue({userId:"u",agentId:"a",provider:"telegram"});const result=await service.redeem({provider:"telegram",externalIdentity:"12345",code:issued.code});assert.deepEqual(result,{userId:"u",agentId:"a"})});
