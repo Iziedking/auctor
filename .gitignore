@@ -26,3 +26,4 @@ SUBMISSION.md
 test-results/
 tsconfig.tsbuildinfo
 docs/superpowers/
+.worktrees/
