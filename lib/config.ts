@@ -48,7 +48,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },
     email: { apiKey: optional(env.SENDGRID_API_KEY), from: optional(env.SENDGRID_FROM_EMAIL) },
-    app: { publicUrl: env.AUCTOR_PUBLIC_URL?.trim() || "https://www.auctor.space" },
+    app: { publicUrl: env.AUCTOR_PUBLIC_URL?.trim() || "https://auctor.space" },
   };
 }
 function optional(value: string | undefined): string | null { return value?.trim() || null; }
