@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { connectWalletWithSiwe, type Eip1193Provider } from "../../lib/auth/wallet-client";
+import { useAccount } from "wagmi";
 
 type Agent = { name:string; autonomyMode:"manual"|"guarded"|"autonomous"; budgetUsd:string; dailyCapUsd:string; perTradeCapUsd:string; allowedChains:string[]; allowedTokens:string[]; maxSlippageBps:number };
 
@@ -9,9 +10,11 @@ function injectedProvider(): Eip1193Provider | undefined { return (window as typ
 function errorMessage(error:unknown):string { return error instanceof Error ? error.message : "Wallet sign-in failed."; }
 
 export function AgentSetup(){
+  const { status } = useAccount();
   const[agent,setAgent]=useState<Agent|null>(null);const[message,setMessage]=useState("");const[connecting,setConnecting]=useState(false);
-  const loadAgent=useCallback(async()=>{const response=await fetch("/backend/api/agent");if(response.ok)setAgent(await response.json())},[]);
+  const loadAgent=useCallback(async()=>{const response=await fetch("/backend/api/agent",{cache:"no-store"});if(response.ok)setAgent(await response.json());else setAgent(null)},[]);
   useEffect(()=>{void loadAgent()},[loadAgent]);
+  useEffect(()=>{if(status === "disconnected"){setAgent(null);setMessage("");void fetch("/api/auth/logout",{method:"POST"})}},[status]);
   async function signIn(){setConnecting(true);setMessage("Connecting to your wallet…");try{await connectWalletWithSiwe({provider:injectedProvider()});await loadAgent();setMessage("Wallet verified. Your agent is ready.")}catch(error){setMessage(errorMessage(error))}finally{setConnecting(false)}}
   async function save(event:React.FormEvent){event.preventDefault();if(!agent)return;const response=await fetch("/backend/api/agent",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({...agent,budgetUsd:Number(agent.budgetUsd),dailyCapUsd:Number(agent.dailyCapUsd),perTradeCapUsd:Number(agent.perTradeCapUsd)})});const body=await response.json();if(response.ok){setAgent(body);setMessage("Your agent controls are saved.")}else setMessage(body.error)}
   if(!agent)return <section className="agentSetup"><p className="eyebrow">Your onchain agent</p><h1>Tell Auctor what you need done.</h1><p>Connect once. Your agent keeps the context, follows your limits, and stays available wherever you communicate.</p><div className="walletConnect"><button type="button" onClick={()=>void signIn()} disabled={connecting}>{connecting?"Check your wallet…":"Continue with wallet"}</button><small>Auctor will request your account, then ask you to sign a secure sign-in message. This does not create a transaction or cost gas.</small></div>{message&&<p role="status">{message}</p>}</section>;
