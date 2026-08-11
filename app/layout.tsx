@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import "@rainbow-me/rainbowkit/styles.css";
+import { Web3Providers } from "../components/web3/providers";
 
 import "./globals.css";
 
@@ -48,7 +50,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><Web3Providers>{children}</Web3Providers></body>
     </html>
   );
 }
