@@ -24,3 +24,5 @@ import "./execution-notifications.test.ts";
 import "./notification-repository.test.ts";
 
 import './runtime-chat-pipeline.test.ts';
+
+import './brand-assets.test.ts';

@@ -1,0 +1,4 @@
+export function AuctorMark({ className = "" }: { readonly className?: string }) {
+  return <svg className={className} viewBox="0 0 64 64" role="img" aria-label="Auctor"><path className="auctorMarkReserve" d="M10 43 25 28l13 13-9 13H10Z"/><path className="auctorMarkAscent" d="M28 25 50 9h4v25L43 45 31 33l8-8-3-3Z"/><path className="auctorMarkChannel" d="m28 25 8-3 3 3-8 8-6-6Z"/></svg>;
+}
+export function AuctorLockup() { return <span className="auctorLockup"><AuctorMark className="auctorMark"/><span className="auctorWordmark"><strong>AUCTOR</strong><small>INTELLIGENT CAPITAL</small></span></span>; }

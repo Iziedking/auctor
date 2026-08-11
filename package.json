@@ -9,6 +9,7 @@
     "scripts":  {
                     "verify:keeperhub":  "node --experimental-strip-types scripts/verify-keeperhub.ts",
                     "test":  "node --experimental-strip-types test/run.ts",
+                    "brand:generate":  "node scripts/generate-brand-assets.mjs",
                     "typecheck":  "tsc --noEmit",
                     "db:generate":  "drizzle-kit generate",
                     "dev":  "next dev -p 3200",
