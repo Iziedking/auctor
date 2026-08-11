@@ -12,8 +12,15 @@ export const metadata: Metadata = {
   description:
     "State your intent. Auctor remembers the context, verifies the action, and keeps you in control.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      {
+        url: "/favicon.ico",
+        sizes: "16x16 32x32 48x48",
+        type: "image/x-icon",
+      },
+    ],
+    shortcut: "/icon.svg",
     apple: "/apple-icon.png",
   },
   openGraph: {
