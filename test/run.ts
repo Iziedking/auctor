@@ -35,3 +35,5 @@ import "./channel-pairing.test.ts";
 import "./channel-service.test.ts";
 import "./siwe.test.ts";
 import "./wallet-client.test.ts";
+import "./auth-http-json.test.ts";
+import "./auth-redirect.test.ts";

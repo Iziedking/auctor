@@ -18,20 +18,13 @@ export interface WalletSignInResult {
   readonly [key: string]: unknown;
 }
 
-function apiError(body: unknown, fallback: string): Error {
-  if (body && typeof body === "object" && "error" in body && typeof body.error === "string") return new Error(body.error);
-  return new Error(fallback);
-}
-
 async function postJson(fetcher: typeof fetch, url: string, body: unknown): Promise<unknown> {
   const response = await fetcher(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  const result: unknown = await response.json();
-  if (!response.ok) throw apiError(result, "Wallet sign-in failed.");
-  return result;
+  return readAuthJson(response);
 }
 
 export async function connectWalletWithSiwe(options: WalletSignInOptions): Promise<WalletSignInResult> {
@@ -52,3 +45,4 @@ export async function connectWalletWithSiwe(options: WalletSignInOptions): Promi
   if (!result || typeof result !== "object" || !("authenticated" in result)) throw new Error("The SIWE verification response was invalid.");
   return result as WalletSignInResult;
 }
+import { readAuthJson } from "./http-json.ts";

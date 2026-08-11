@@ -43,7 +43,7 @@ test("wallet sign-in reports when no injected provider is available", async () =
 test("wallet sign-in surfaces API errors", async () => {
   const provider: Eip1193Provider = { async request({ method }) { return method === "eth_requestAccounts" ? ["0x0000000000000000000000000000000000000001"] : "0x1"; } };
   const fetcher: typeof fetch = async () => Response.json({ error: "keeperhub_nonce_failed" }, { status: 502 });
-  await assert.rejects(() => connectWalletWithSiwe({ provider, fetcher }), /keeperhub_nonce_failed/);
+  await assert.rejects(() => connectWalletWithSiwe({ provider, fetcher }), /temporarily unavailable/i);
 });
 
 test("wallet sign-in rejects malformed wallet accounts and chain ids", async () => {
