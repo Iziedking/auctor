@@ -71,6 +71,7 @@ export const agents = pgTable("agents", {
   emergencyStop: boolean("emergency_stop").default(false).notNull(),
   khOrgId: text("kh_org_id"),
   khWalletAddress: text("kh_wallet_address"),
+  khHmacSecretEncrypted: text("kh_hmac_secret_encrypted"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

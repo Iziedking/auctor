@@ -3,10 +3,11 @@ type Provider = "anthropic" | "openrouter" | "ollama";
 export interface Config {
   readonly capabilities: Readonly<Record<Capability, boolean>>;
   readonly database: { readonly url: string | null };
-  readonly keeperhub: { readonly baseUrl: string; readonly apiKey: string | null; readonly orgId: string | null; readonly walletAddress: string | null };
+  readonly keeperhub: { readonly baseUrl: string; readonly apiKey: string | null; readonly orgId: string | null; readonly walletAddress: string | null; readonly signerEncryptionKey: string | null };
   readonly memory: { readonly url: string };
   readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null; readonly fallback: { readonly baseUrl: string; readonly model: string; readonly apiKey: string } | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
+  readonly research: { readonly endpoint: string | null; readonly provider: string };
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
   readonly notifications: { readonly telegramToken: string | null };
@@ -40,10 +41,11 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
       llm: mockMode || llmKey !== null || provider === "ollama",
     },
     database: { url: optional(env.DATABASE_URL) },
-    keeperhub: { baseUrl: env.KEEPERHUB_BASE_URL?.trim() || "https://app.keeperhub.com", apiKey, orgId: optional(env.KEEPERHUB_ORG_ID), walletAddress: optional(env.KEEPERHUB_WALLET_ADDRESS) },
+    keeperhub: { baseUrl: env.KEEPERHUB_BASE_URL?.trim() || "https://app.keeperhub.com", apiKey, orgId: optional(env.KEEPERHUB_ORG_ID), walletAddress: optional(env.KEEPERHUB_WALLET_ADDRESS), signerEncryptionKey: optional(env.KEEPERHUB_SIGNER_ENCRYPTION_KEY) },
     memory: { url: env.AGENT_MEMORY_URL?.trim() || "http://127.0.0.1:4000" },
     llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey, fallback: agentRouterFallback(env) },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
+    research: { endpoint: optional(env.X402_RESEARCH_ENDPOINT), provider: optional(env.X402_RESEARCH_PROVIDER) ?? "keeperhub" },
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },

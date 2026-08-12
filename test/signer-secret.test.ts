@@ -1,0 +1,3 @@
+import assert from "node:assert/strict";import test from "node:test";import{decryptSignerSecret,encryptSignerSecret}from"../lib/keeperhub/signer-secret.ts";
+test("KeeperHub signer secrets roundtrip with authenticated encryption",()=>{const encrypted=encryptSignerSecret("hmac-secret","master-key");assert.notEqual(encrypted,"hmac-secret");assert.equal(decryptSignerSecret(encrypted,"master-key"),"hmac-secret")});
+test("KeeperHub signer secret rejects the wrong encryption key",()=>{const encrypted=encryptSignerSecret("hmac-secret","master-key");assert.throws(()=>decryptSignerSecret(encrypted,"wrong-key"))});

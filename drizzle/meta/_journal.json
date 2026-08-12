@@ -1,27 +1,34 @@
 {
-    "version":  "7",
-    "dialect":  "postgresql",
-    "entries":  [
-                    {
-                        "idx":  0,
-                        "version":  "7",
-                        "when":  1786033469831,
-                        "tag":  "0000_freezing_imperial_guard",
-                        "breakpoints":  true
-                    },
-                    {
-                        "idx":  1,
-                        "version":  "7",
-                        "when":  1786036506652,
-                        "tag":  "0001_omniscient_jamie_braddock",
-                        "breakpoints":  true
-                    },
-                    {
-                        "idx":  2,
-                        "version":  "7",
-                        "when":  1786432996282,
-                        "tag":  "0002_email_agent_identity",
-                        "breakpoints":  true
-                    }
-                ]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786033469831,
+      "tag": "0000_freezing_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786036506652,
+      "tag": "0001_omniscient_jamie_braddock",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786432996282,
+      "tag": "0002_email_agent_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786527510395,
+      "tag": "0003_clear_revanche",
+      "breakpoints": true
+    }
+  ]
 }

@@ -13,18 +13,20 @@ type Pipeline = ReturnType<typeof createChatPipeline>;
 type Session = ReturnType<typeof createChatSession>;
 type Conversation = ReturnType<typeof createConversationService>;
 type LanguageRouter={route(input:{text:string;memory:readonly string[];agent:{name:string;autonomyMode:string;dailyCapUsd:string}}):Promise<{text:string;reply?:string;source:"llm"|"fallback"}>};
+type ResearchRunner={run(text:string):Promise<unknown|null>};
 
-export async function handleChatRequest(input: unknown, deps: { readonly pipeline: Pipeline; readonly session?: Session; readonly identity?: { readonly user: string; readonly passphrase: string; readonly folder: string }; readonly conversation?: Conversation; readonly agentId?: string; readonly language?:LanguageRouter;readonly agent?:{name:string;autonomyMode:string;dailyCapUsd:string} }) {
+export async function handleChatRequest(input: unknown, deps: { readonly pipeline: Pipeline; readonly session?: Session; readonly identity?: { readonly user: string; readonly passphrase: string; readonly folder: string }; readonly conversation?: Conversation; readonly agentId?: string; readonly language?:LanguageRouter;readonly agent?:{name:string;autonomyMode:string;dailyCapUsd:string};readonly research?:ResearchRunner }) {
   const parsed = requestSchema.safeParse(input);
   if (!parsed.success) return { status: 400 as const, body: { error: "invalid_request" as const } };
   if (deps.conversation && deps.agentId) {
     const recalledMemory = deps.session && deps.identity ? await deps.session.recallMemory({ text: parsed.data.text, ...deps.identity }) : [];
     const routed=deps.language&&deps.agent?await deps.language.route({text:parsed.data.text,memory:recalledMemory,agent:deps.agent}):{text:parsed.data.text,source:"fallback" as const};
+    const research=deps.research?await deps.research.run(parsed.data.text):null;
     const persisted = await deps.conversation.handle({ agentId: deps.agentId, text: routed.text, correlationId: parsed.data.correlationId, ...(parsed.data.conversationId ? { conversationId: parsed.data.conversationId } : {}), recalledMemory });
     if (deps.session && deps.identity && isExplicitPreference(parsed.data.text)) {
       await deps.session.rememberDecision({ ...deps.identity, text: parsed.data.text });
     }
-    return { status: 200 as const, body: { ...persisted.response, conversationId: persisted.conversationId,...(routed.reply?{interpretation:routed.reply}:{}) } };
+    return { status: 200 as const, body: { ...persisted.response, conversationId: persisted.conversationId,...(routed.reply?{interpretation:routed.reply}:{}),...(research?{researchUsed:[research]}:{}) } };
   }
   const result = deps.session && deps.identity ? await deps.session.handle({ ...parsed.data, ...deps.identity }) : await deps.pipeline.handle(parsed.data);
   if (deps.session && deps.identity && isExplicitPreference(parsed.data.text)) {

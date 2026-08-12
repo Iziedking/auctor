@@ -39,3 +39,4 @@ test("KeeperHub wallet address is loaded for live trade previews", () => {
   assert.equal(loadConfig({ KEEPERHUB_WALLET_ADDRESS: walletAddress }).keeperhub.walletAddress, walletAddress);
 });
 test("AgentRouter is configured only as the Anthropic fallback",()=>{const config=loadConfig({LLM_PROVIDER:"anthropic",ANTHROPIC_API_KEY:"primary",AGENTROUTER_API_KEY:"fallback",AGENTROUTER_BASE_URL:"https://agentrouter.org",AGENTROUTER_MODEL:"claude-opus-4-8"});assert.equal(config.llm.apiKey,"primary");assert.deepEqual(config.llm.fallback,{baseUrl:"https://agentrouter.org",apiKey:"fallback",model:"claude-opus-4-8"})});
+test("KeeperHub signer encryption key is server-side configuration",()=>{assert.equal(loadConfig({KEEPERHUB_SIGNER_ENCRYPTION_KEY:"secret"}).keeperhub.signerEncryptionKey,"secret")});
