@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildSiweMessage, createSiweChallenge } from "../lib/auth/siwe.ts";
+import { buildKeeperHubSiweMessage, buildSiweMessage, createSiweChallenge } from "../lib/auth/siwe.ts";
 test("SIWE challenge has bounded expiry and a cryptographic nonce",()=>{const challenge=createSiweChallenge("0x0000000000000000000000000000000000000001",1,new Date(0));assert.equal(challenge.expiresAt,"1970-01-01T00:10:00.000Z");assert.match(challenge.nonce,/^[0-9a-f]{32}$/)});
 test("SIWE message binds domain wallet chain and nonce",()=>{const challenge=createSiweChallenge("0x0000000000000000000000000000000000000001",8453,new Date(0));const message=buildSiweMessage({domain:"www.auctor.space",uri:"https://www.auctor.space",challenge});assert.match(message,/www\.auctor\.space wants/);assert.match(message,/Chain ID: 8453/);assert.match(message,new RegExp(`Nonce: ${challenge.nonce}`))});
+test("KeeperHub SIWE message matches the production verifier contract",()=>{const challenge=createSiweChallenge("0x52908400098527886e0f7030069857d2e4169ee7",8453,new Date(0));const message=buildKeeperHubSiweMessage(challenge);assert.equal(message,`app.keeperhub.com wants you to sign in with your Ethereum account:\n0x52908400098527886E0F7030069857D2E4169EE7\n\nSign in to KeeperHub with your wallet.\n\nURI: https://app.keeperhub.com\nVersion: 1\nChain ID: 8453\nNonce: ${challenge.nonce}\nIssued At: 1970-01-01T00:00:00.000Z`);assert.doesNotMatch(message,/Expiration Time:/)});
