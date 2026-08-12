@@ -46,3 +46,4 @@ import "./database-audit-source.test.ts";
 import "./x402-research.test.ts";
 import "./signer-secret.test.ts";
 import "./research-orchestrator.test.ts";
+import "./research-provider-request.test.ts";

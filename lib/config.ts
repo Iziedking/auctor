@@ -7,7 +7,7 @@ export interface Config {
   readonly memory: { readonly url: string };
   readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null; readonly fallback: { readonly baseUrl: string; readonly model: string; readonly apiKey: string } | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
-  readonly research: { readonly endpoint: string | null; readonly provider: string };
+  readonly research: { readonly providers: readonly {readonly name:string;readonly category:"market"|"onchain"|"sentiment"|"news";readonly endpoint:string}[] };
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
   readonly notifications: { readonly telegramToken: string | null };
@@ -45,7 +45,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     memory: { url: env.AGENT_MEMORY_URL?.trim() || "http://127.0.0.1:4000" },
     llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey, fallback: agentRouterFallback(env) },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
-    research: { endpoint: optional(env.X402_RESEARCH_ENDPOINT), provider: optional(env.X402_RESEARCH_PROVIDER) ?? "keeperhub" },
+    research: { providers: parseResearchProviders(env.X402_RESEARCH_PROVIDERS,env.X402_RESEARCH_ENDPOINT,env.X402_RESEARCH_PROVIDER) },
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },
@@ -65,6 +65,7 @@ function defaultModel(provider: Provider): string {
   return "qwen3:8b";
 }
 function agentRouterFallback(env:Readonly<Record<string,string|undefined>>){const apiKey=optional(env.AGENTROUTER_API_KEY);if(!apiKey)return null;return{baseUrl:(env.AGENTROUTER_BASE_URL?.trim()||"https://agentrouter.org").replace(/\/$/,""),model:env.AGENTROUTER_MODEL?.trim()||"claude-opus-4-8",apiKey}}
+function parseResearchProviders(value:string|undefined,legacyEndpoint:string|undefined,legacyProvider:string|undefined){const entries=(value??"").split(",").map(x=>x.trim()).filter(Boolean).map(entry=>{const[name,category,endpoint]=entry.split("|").map(x=>x?.trim());if(!name||!endpoint||!category||!["market","onchain","sentiment","news"].includes(category))throw new Error(`Invalid X402_RESEARCH_PROVIDERS entry: ${entry}`);new URL(endpoint);return{name,category:category as "market"|"onchain"|"sentiment"|"news",endpoint}});const legacy=optional(legacyEndpoint);if(!entries.length&&legacy)entries.push({name:optional(legacyProvider)??"keeperhub",category:"market",endpoint:legacy});return entries}
 function nonNegativeNumber(value: string | undefined, fallback: number): number {
   if (value === undefined || value.trim() === "") return fallback;
   const parsed = Number(value);

@@ -3,6 +3,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { Web3Providers } from "../components/web3/providers";
 
 import "./globals.css";
+import "./shell-fixes.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://auctor.space"),
