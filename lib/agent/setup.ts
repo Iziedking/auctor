@@ -14,8 +14,8 @@ export function validateAgentSetup(input: AgentSetupInput): AgentSetup {
   if(perTradeCapUsd>dailyCapUsd) throw new Error("Per-trade cap cannot exceed the daily cap.");
   const maxSlippageBps=input.maxSlippageBps??100;
   if(!Number.isInteger(maxSlippageBps)||maxSlippageBps<0||maxSlippageBps>5000) throw new Error("Maximum slippage must be between 0 and 5000 basis points.");
-  const allowedChains=[...(input.allowedChains??KEEPERHUB_STABLE_CHAIN_IDS)].map(x=>x.trim()).filter(Boolean);
+  const allowedChains=[...(input.allowedChains??KEEPERHUB_TEST_CHAIN_IDS)].map(x=>x.trim()).filter(Boolean);
   if(!allowedChains.length) throw new Error("At least one chain is required.");
   return {name,autonomyMode,budgetUsd,dailyCapUsd,perTradeCapUsd,allowedChains,allowedTokens:[...(input.allowedTokens??[])].map(x=>x.trim()).filter(Boolean),maxSlippageBps};
 }
-import { KEEPERHUB_STABLE_CHAIN_IDS } from "../chains.ts";
+import { KEEPERHUB_TEST_CHAIN_IDS } from "../chains.ts";

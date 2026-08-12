@@ -1,2 +1,2 @@
 import { AppShell } from "../../components/app-shell";import{NotificationCenter}from"../../components/notifications/notification-center";import{TelegramConnection}from"../../components/notifications/telegram-connection";import{requireServerSession}from"../../lib/auth/server-session";
-export default async function NotificationsPage(){await requireServerSession("/notifications");return <AppShell><TelegramConnection/><NotificationCenter/></AppShell>}
+export default async function NotificationsPage(){await requireServerSession("/notifications");return <AppShell><NotificationCenter/><TelegramConnection/></AppShell>}
