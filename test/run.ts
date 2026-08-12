@@ -47,3 +47,4 @@ import "./x402-research.test.ts";
 import "./signer-secret.test.ts";
 import "./research-orchestrator.test.ts";
 import "./research-provider-request.test.ts";
+import "./keyed-research.test.ts";
