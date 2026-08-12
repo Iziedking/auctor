@@ -4,6 +4,7 @@ import { executeApprovedPreview } from "../lib/chat/approved-trade.ts";
 import { createChatPipeline } from "../lib/chat/pipeline.ts";
 import { ok } from "../lib/result.ts";
 import { createMockTradeMarketData } from "../lib/chat/mock-market-data.ts";
+import { createPreviewTradeMarketData } from "../lib/chat/preview-market-data.ts";
 
 const pipeline = createChatPipeline({ mode: "mock", chains: { base: "8453" }, tokens: { USDC: "0x1111111111111111111111111111111111111111", WETH: "0x2222222222222222222222222222222222222222" }, router: "0x3333333333333333333333333333333333333333" });
 
@@ -33,3 +34,4 @@ test("mock market data is restricted to the captured Base ETH to USDC trade", as
   assert.equal(snapshot.notionalUsdMicros, 1_902_600n);
   await assert.rejects(() => market.resolve({ chainId: "8453", tokenIn: "USDC", tokenOut: "WETH", amount: "1" }), /mock_market_pair_not_available/);
 });
+test("live market data derives exact policy values from the successful KeeperHub preview", async()=>{const preview={kind:"preview" as const,request:{correlationId:"market-live",chainId:"8453",privateRouting:false,maxGasUsd:0,action:{kind:"call" as const,to:"0x3333333333333333333333333333333333333333" as const,functionName:"exactInputSingle",functionArgs:JSON.stringify([{amountOutMinimum:"990000"}]),value:"0.001"}},trade:{amount:"0.001",tokenIn:"ETH",tokenOut:"USDC",chain:"base"},simulation:{status:"simulated" as const,gasEstimate:"21000",wouldRevert:false,simulatedReturnValue:"1000000"},approvalRequired:true as const,checks:[],steps:[],recalledMemory:[]};const market=createPreviewTradeMarketData(preview);const snapshot=await market.resolve({chainId:"8453",tokenIn:"ETH",tokenOut:"USDC",amount:"0.001"});assert.equal(snapshot.amountIn,1_000_000_000_000_000n);assert.equal(snapshot.availableBalance,snapshot.amountIn);assert.equal(snapshot.notionalUsdMicros,snapshot.quotedOut);});

@@ -19,8 +19,8 @@ export async function buildCapabilityHealth(config: Config, memory?: MemoryHealt
     memory: memoryHealth,
     llm: config.mockMode ? "mock" as const : config.capabilities.llm ? "configured" as const : "disabled" as const,
     approval: {
-      mode: "fixture" as const,
-      available: config.mockMode && config.database.url !== null && config.agent.id !== null,
+      mode: config.mockMode ? "fixture" as const : "live" as const,
+      available: !config.mockMode && config.database.url !== null && config.keeperhub.apiKey !== null,
     },
   };
 }
