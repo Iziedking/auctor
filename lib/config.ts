@@ -7,7 +7,7 @@ export interface Config {
   readonly memory: { readonly url: string };
   readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null; readonly fallback: { readonly baseUrl: string; readonly model: string; readonly apiKey: string } | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
-  readonly research: { readonly providers: readonly {readonly name:string;readonly category:"market"|"onchain"|"sentiment"|"news";readonly endpoint:string}[] };
+  readonly research: { readonly providers: readonly {readonly name:string;readonly category:"market"|"onchain"|"sentiment"|"news";readonly endpoint:string}[];readonly adanosApiKey:string|null;readonly newsEndpoint:string|null };
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
   readonly notifications: { readonly telegramToken: string | null };
@@ -33,7 +33,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
       database: optional(env.DATABASE_URL) !== null,
       execution: mockMode || apiKey !== null,
       memory: memoryEnabled,
-      research: optional(env.FIRECRAWL_API_KEY) !== null,
+      research: optional(env.FIRECRAWL_API_KEY) !== null || optional(env.ADANOS_API_KEY) !== null || optional(env.FREE_CRYPTO_NEWS_ENDPOINT) !== null || Boolean(env.X402_RESEARCH_PROVIDERS?.trim()),
       x402: mockMode || apiKey !== null,
       telegram: optional(env.TELEGRAM_BOT_TOKEN) !== null,
       email: optional(env.SENDGRID_API_KEY) !== null,
@@ -45,7 +45,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     memory: { url: env.AGENT_MEMORY_URL?.trim() || "http://127.0.0.1:4000" },
     llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey, fallback: agentRouterFallback(env) },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
-    research: { providers: parseResearchProviders(env.X402_RESEARCH_PROVIDERS,env.X402_RESEARCH_ENDPOINT,env.X402_RESEARCH_PROVIDER) },
+    research: { providers: parseResearchProviders(env.X402_RESEARCH_PROVIDERS,env.X402_RESEARCH_ENDPOINT,env.X402_RESEARCH_PROVIDER),adanosApiKey:optional(env.ADANOS_API_KEY),newsEndpoint:optional(env.FREE_CRYPTO_NEWS_ENDPOINT) },
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },
