@@ -5,7 +5,7 @@ export interface Config {
   readonly database: { readonly url: string | null };
   readonly keeperhub: { readonly baseUrl: string; readonly apiKey: string | null; readonly orgId: string | null; readonly walletAddress: string | null };
   readonly memory: { readonly url: string };
-  readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null };
+  readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null; readonly fallback: { readonly baseUrl: string; readonly model: string; readonly apiKey: string } | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
@@ -42,7 +42,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     database: { url: optional(env.DATABASE_URL) },
     keeperhub: { baseUrl: env.KEEPERHUB_BASE_URL?.trim() || "https://app.keeperhub.com", apiKey, orgId: optional(env.KEEPERHUB_ORG_ID), walletAddress: optional(env.KEEPERHUB_WALLET_ADDRESS) },
     memory: { url: env.AGENT_MEMORY_URL?.trim() || "http://127.0.0.1:4000" },
-    llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey },
+    llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey, fallback: agentRouterFallback(env) },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
@@ -62,6 +62,7 @@ function defaultModel(provider: Provider): string {
   if (provider === "openrouter") return "anthropic/claude-haiku-4.5";
   return "qwen3:8b";
 }
+function agentRouterFallback(env:Readonly<Record<string,string|undefined>>){const apiKey=optional(env.AGENTROUTER_API_KEY);if(!apiKey)return null;return{baseUrl:(env.AGENTROUTER_BASE_URL?.trim()||"https://agentrouter.org").replace(/\/$/,""),model:env.AGENTROUTER_MODEL?.trim()||"claude-opus-4-8",apiKey}}
 function nonNegativeNumber(value: string | undefined, fallback: number): number {
   if (value === undefined || value.trim() === "") return fallback;
   const parsed = Number(value);

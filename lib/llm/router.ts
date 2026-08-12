@@ -1,0 +1,5 @@
+import type { LlmIntent } from "./client.ts";
+type Context={text:string;memory:readonly string[];agent:{name:string;autonomyMode:string;dailyCapUsd:string}};
+type Client={interpret(context:Context):Promise<{kind:"interpreted";value:LlmIntent}|{kind:"unavailable";reason:string}>};
+export function createNaturalLanguageRouter(deps:{client:Client}){return{async route(context:Context){const result=await deps.client.interpret(context);if(result.kind!=="interpreted")return{text:context.text,source:"fallback" as const};return{text:toDeterministicText(result.value,context.text),...(result.value.reply?{reply:result.value.reply}:{}),source:"llm" as const}}}}
+function toDeterministicText(value:LlmIntent,original:string){if(value.intent==="trade")return`swap ${value.amount} ${value.tokenIn!.toUpperCase()} to ${value.tokenOut!.toUpperCase()} on ${value.chain!.toLowerCase()}`;if(value.intent==="preference")return`remember: ${original}`;if(value.intent==="greeting")return"hello";if(value.intent==="help")return"help";if(value.intent==="cancel")return"cancel";return original}

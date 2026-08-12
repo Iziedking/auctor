@@ -40,3 +40,7 @@ import "./auth-redirect.test.ts";
 import "./authenticated-shell.test.ts";
 import "./public-gateway.test.ts";
 import "./rainbowkit.test.ts";
+import "./llm-client.test.ts";
+import "./llm-router.test.ts";
+import "./database-audit-source.test.ts";
+import "./x402-research.test.ts";

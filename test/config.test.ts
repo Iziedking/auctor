@@ -38,3 +38,4 @@ test("KeeperHub wallet address is loaded for live trade previews", () => {
   const walletAddress = "0xeDd7A8cdE35Dd2d30d821861e52bF9329c165386";
   assert.equal(loadConfig({ KEEPERHUB_WALLET_ADDRESS: walletAddress }).keeperhub.walletAddress, walletAddress);
 });
+test("AgentRouter is configured only as the Anthropic fallback",()=>{const config=loadConfig({LLM_PROVIDER:"anthropic",ANTHROPIC_API_KEY:"primary",AGENTROUTER_API_KEY:"fallback",AGENTROUTER_BASE_URL:"https://agentrouter.org",AGENTROUTER_MODEL:"claude-opus-4-8"});assert.equal(config.llm.apiKey,"primary");assert.deepEqual(config.llm.fallback,{baseUrl:"https://agentrouter.org",apiKey:"fallback",model:"claude-opus-4-8"})});
