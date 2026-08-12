@@ -29,6 +29,13 @@
       "when": 1786527510395,
       "tag": "0003_clear_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786550400000,
+      "tag": "0004_telegram_pairing",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@ export type ChatIntent =
   | { readonly kind: "greeting" }
   | { readonly kind: "help" }
   | { readonly kind: "cancel" }
+  | { readonly kind: "portfolio" }
   | { readonly kind: "preference" }
   | { readonly kind: "preference" }
   | { readonly kind: "trade"; readonly amount: string; readonly tokenIn: string; readonly tokenOut: string; readonly chain: string }
@@ -53,6 +54,9 @@ export function classifyChat(text: string): ChatIntent {
   if (/^(cancel|stop|abort)([ ]|$)/.test(normalized)) {
     return { kind: "cancel" };
   }
+  if (normalized === "portfolio" || /(portfolio|wallet balance|balances|holdings|positions)/.test(normalized)) {
+    return { kind: "portfolio" };
+  }
   const trade = /^(swap|trade) ([0-9]+([.][0-9]+)?) ([a-z0-9]+) to ([a-z0-9]+) on ([a-z0-9-]+)$/.exec(normalized);
   if (trade?.[2] && trade[4] && trade[5] && trade[6]) {
     return {
@@ -97,6 +101,7 @@ export function createChatPipeline(config: ChatPipelineConfig) {
       if (intent.kind === "greeting") return { kind: "message", message: "Auctor is ready.", steps: ["classified"], recalledMemory };
       if (intent.kind === "help") return { kind: "message", message: "Use: swap <amount> <token> to <token> on <chain>.", steps: ["classified"], recalledMemory };
       if (intent.kind === "cancel") return { kind: "message", message: "No transaction was submitted.", steps: ["classified", "cancelled"], recalledMemory };
+      if (intent.kind === "portfolio") return { kind: "message", message: "Open Portfolio to inspect the connected agent wallet and refresh its live testnet balances.", steps: ["classified", "portfolio"], recalledMemory };
       if (intent.kind === "preference") return { kind: "message", message: "Preference noted.", steps: ["classified", "remembered"], recalledMemory };
       if (intent.kind === "unknown") return { kind: "refused", reason: "unsupported_intent", steps: ["classified"], recalledMemory };
       const built = buildTradeRequest(intent, { ...config, correlationId: input.correlationId });

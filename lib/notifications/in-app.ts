@@ -1,0 +1,3 @@
+import{desc,eq}from"drizzle-orm";import type{PostgresJsDatabase}from"drizzle-orm/postgres-js";import{executions}from"../db/schema.ts";import type*as schema from"../db/schema.ts";
+type Database=PostgresJsDatabase<typeof schema>;
+export async function listInAppNotifications(db:Database,agentId:string,limit=40){return db.select({id:executions.id,status:executions.status,chainId:executions.chainId,intent:executions.intent,txHash:executions.txHash,failureReason:executions.failureReason,createdAt:executions.createdAt,updatedAt:executions.updatedAt,notified:executions.notified}).from(executions).where(eq(executions.agentId,agentId)).orderBy(desc(executions.updatedAt)).limit(limit)}

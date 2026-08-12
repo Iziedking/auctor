@@ -83,6 +83,16 @@ export const channelConnections = pgTable("channel_connections", {
   externalIdentity: text("external_identity").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [uniqueIndex("channel_provider_identity").on(table.provider, table.externalIdentity)]);
+export const channelPairingCodes = pgTable("channel_pairing_codes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  agentId: uuid("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  provider: channelProvider("provider").notNull(),
+  codeHash: text("code_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 export const conversations = pgTable("conversations", {
   id: uuid("id").defaultRandom().primaryKey(),
   agentId: uuid("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
