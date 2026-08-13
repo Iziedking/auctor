@@ -3,6 +3,7 @@ export type ChatIntent =
   | { readonly kind: "help" }
   | { readonly kind: "cancel" }
   | { readonly kind: "portfolio" }
+  | { readonly kind: "withdraw"; readonly amount: string; readonly destination: string; readonly chain: string }
   | { readonly kind: "preference" }
   | { readonly kind: "preference" }
   | { readonly kind: "trade"; readonly amount: string; readonly tokenIn: string; readonly tokenOut: string; readonly chain: string }
@@ -57,6 +58,7 @@ export function classifyChat(text: string): ChatIntent {
   if (normalized === "portfolio" || /(portfolio|balance|balances|holdings|positions)/.test(normalized)) {
     return { kind: "portfolio" };
   }
+  const withdrawal=/^(?:send|withdraw) (all|[0-9]+(?:[.][0-9]+)?) eth to (my (?:connected )?wallet|0x[0-9a-f]{40})(?: on (base|ethereum|sepolia))?$/.exec(normalized);if(withdrawal?.[1]&&withdrawal[2])return{kind:"withdraw",amount:withdrawal[1],destination:withdrawal[2],chain:withdrawal[3]??"base"};
   const trade = /^(swap|trade) ([0-9]+([.][0-9]+)?) ([a-z0-9]+) to ([a-z0-9]+) on ([a-z0-9-]+)$/.exec(normalized);
   if (trade?.[2] && trade[4] && trade[5] && trade[6]) {
     return {
@@ -106,6 +108,7 @@ export function createChatPipeline(config: ChatPipelineConfig) {
       if (intent.kind === "cancel") return { kind: "message", message: "No transaction was submitted.", steps: ["classified", "cancelled"], recalledMemory };
       if (intent.kind === "portfolio") return { kind: "message", message: "Open Portfolio to inspect the connected agent wallet and refresh its live testnet balances.", steps: ["classified", "portfolio"], recalledMemory };
       if (intent.kind === "preference") return { kind: "message", message: "Preference noted.", steps: ["classified", "remembered"], recalledMemory };
+      if (intent.kind === "withdraw") return { kind: "refused", reason: "withdrawal_requires_live_mode", steps: ["classified", "refused"], recalledMemory };
       if (intent.kind === "unknown") return { kind: "refused", reason: "unsupported_intent", steps: ["classified"], recalledMemory };
       const built = buildTradeRequest(intent, { ...config, correlationId: input.correlationId });
       if (built.kind === "invalid") return { kind: "refused", reason: built.reason, steps: ["classified", "refused"], recalledMemory };

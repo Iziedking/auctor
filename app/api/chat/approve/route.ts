@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     if (!session.khWalletAddress) return NextResponse.json({ error: "wallet_not_provisioned" }, { status: 503 });
     const keeperHub = createKeeperHubClient({ baseUrl: config.keeperhub.baseUrl, apiKey: config.keeperhub.apiKey });
-    const pipeline = createRuntimeChatPipeline({ ...config, keeperhub: { ...config.keeperhub, walletAddress: session.khWalletAddress } });
+    const owner=walletOwner(session.email);const pipeline = createRuntimeChatPipeline({ ...config, ...(owner?{ownerAddress:owner}:{}), keeperhub: { ...config.keeperhub, walletAddress: session.khWalletAddress } });
     const execution = createExecutionService({ repository: createDrizzleExecutionRepository(database.db), keeperHub });
     const memory=createMemoryClient({baseUrl:config.memory.url});
     const response = await handleApprovalRequest(body, {
@@ -49,3 +49,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "live_approval_failed" }, { status: 503 });
   } finally { await database.close(); }
 }
+function walletOwner(email:string){const match=/^(0x[0-9a-f]{40})@wallet\.auctor\.space$/i.exec(email);return match?.[1] as `0x${string}`|undefined}

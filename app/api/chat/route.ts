@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     }
     const pipeline = createRuntimeChatPipeline({
       ...config,
+      ...(walletOwner(session.email)?{ownerAddress:walletOwner(session.email)!}:{}),
       keeperhub: {
         ...config.keeperhub,
         walletAddress: session.khWalletAddress,
@@ -131,3 +132,4 @@ export async function POST(request: Request) {
     await database.close();
   }
 }
+function walletOwner(email:string){const match=/^(0x[0-9a-f]{40})@wallet\.auctor\.space$/i.exec(email);return match?.[1] as `0x${string}`|undefined}
