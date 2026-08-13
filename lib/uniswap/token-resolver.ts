@@ -1,0 +1,14 @@
+import { createPublicClient, http, isAddress, parseAbi, type Address } from "viem";
+import { mainnet, base, arbitrum, optimism, polygon, bsc, avalanche, unichain } from "viem/chains";
+const NATIVE="0x0000000000000000000000000000000000000000" as Address;
+const CHAINS={1:mainnet,8453:base,42161:arbitrum,10:optimism,137:polygon,56:bsc,43114:avalanche,130:unichain} as const;
+const DEX_CHAIN:Record<number,string>={1:"ethereum",8453:"base",42161:"arbitrum",10:"optimism",137:"polygon",56:"bsc",43114:"avalanche",130:"unichain"};
+type Pair={chainId?:unknown;baseToken?:{symbol?:unknown;address?:unknown};liquidity?:{usd?:unknown}};
+export type ResolvedToken={address:Address;symbol:string;decimals:number;native:boolean};
+export async function resolveSwapToken(input:{value:string;chainId:number;fetch?:typeof fetch}):Promise<ResolvedToken>{
+ const value=input.value.trim();if(/^(eth|native)$/i.test(value))return{address:NATIVE,symbol:"ETH",decimals:18,native:true};
+ const address=isAddress(value)?value:await resolveSymbol(value,input.chainId,input.fetch??fetch);const chain=CHAINS[input.chainId as keyof typeof CHAINS];if(!chain)throw new Error("uniswap_chain_unsupported");const client=createPublicClient({chain,transport:http()});const [decimals,symbol]=await Promise.all([client.readContract({address,abi:parseAbi(["function decimals() view returns (uint8)"]),functionName:"decimals"}),client.readContract({address,abi:parseAbi(["function symbol() view returns (string)"]),functionName:"symbol"})]);return{address,symbol,decimals:Number(decimals),native:false};
+}
+async function resolveSymbol(symbol:string,chainId:number,fetcher:typeof fetch):Promise<Address>{
+ const normalized=symbol.replace(/^\$/i,"").toLowerCase();const response=await fetcher(`https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(normalized)}`,{headers:{accept:"application/json"},signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error("token_discovery_unavailable");const body=await response.json() as {pairs?:unknown[]};const expected=DEX_CHAIN[chainId];const candidates=(Array.isArray(body.pairs)?body.pairs:[]).filter((item):item is Pair=>{const pair=item as Pair;return Boolean(item&&typeof item==="object"&&pair.chainId===expected&&String(pair.baseToken?.symbol??"").toLowerCase()===normalized&&typeof pair.baseToken?.address==="string"&&isAddress(pair.baseToken.address))}).sort((a,b)=>Number(b.liquidity?.usd??0)-Number(a.liquidity?.usd??0));if(!candidates[0])throw new Error("token_not_found_on_chain");if(candidates[1]&&Number(candidates[1].liquidity?.usd??0)>=Number(candidates[0].liquidity?.usd??0)*0.5&&String(candidates[1].baseToken?.address).toLowerCase()!==String(candidates[0].baseToken?.address).toLowerCase())throw new Error("token_symbol_ambiguous_use_address");return candidates[0].baseToken!.address as Address;
+}

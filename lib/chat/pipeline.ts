@@ -34,7 +34,7 @@ interface SessionMemory {
 
 export type ChatPipelineResult =
   | { readonly kind: "message"; readonly message: string; readonly steps: readonly string[]; readonly recalledMemory: readonly string[] }
-  | { readonly kind: "preview"; readonly request: ExecutionRequest; readonly trade: { readonly amount: string; readonly tokenIn: string; readonly tokenOut: string; readonly chain: string }; readonly simulation?: Simulation; readonly approvalRequired: true; readonly checks: readonly string[]; readonly steps: readonly string[]; readonly recalledMemory: readonly string[] }
+  | { readonly kind: "preview"; readonly request: ExecutionRequest; readonly trade: { readonly amount: string; readonly tokenIn: string; readonly tokenOut: string; readonly chain: string }; readonly simulation?: Simulation; readonly quote?:{readonly amountIn:string;readonly amountOut:string;readonly gasFeeUsd:string|null}; readonly approvalRequired: true; readonly checks: readonly string[]; readonly steps: readonly string[]; readonly recalledMemory: readonly string[] }
   | { readonly kind: "refused"; readonly reason: string; readonly steps: readonly string[]; readonly recalledMemory: readonly string[] };
 
 export function classifyChat(text: string): ChatIntent {
@@ -67,8 +67,11 @@ export function classifyChat(text: string): ChatIntent {
       chain: trade[6],
     };
   }
+  const naturalTrade = /^(swap|trade) ([0-9]+(?:[.][0-9]+)?) (base sepolia|ethereum sepolia|sepolia|base) ([a-z0-9]+) to ([a-z0-9]+)$/.exec(normalized);
+  if (naturalTrade?.[2] && naturalTrade[3] && naturalTrade[4] && naturalTrade[5]) return { kind:"trade", amount:naturalTrade[2], tokenIn:naturalTrade[4].toUpperCase(), tokenOut:naturalTrade[5].toUpperCase(), chain:normalizeChain(naturalTrade[3]) };
   return { kind: "unknown", text: text.trim() };
 }
+function normalizeChain(value:string){if(value==="base sepolia")return"base-sepolia";if(value==="ethereum sepolia")return"sepolia";return value}
 
 export function buildTradeRequest(intent: Extract<ChatIntent, { kind: "trade" }>, config: TradeTemplateConfig): TradeRequestResult {
   const chainId = config.chains[intent.chain];

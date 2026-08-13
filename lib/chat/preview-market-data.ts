@@ -7,13 +7,12 @@ export function createPreviewTradeMarketData(preview: Preview): TradeMarketData 
   return {
     async resolve(input) {
       if (input.chainId !== preview.request.chainId || input.tokenIn !== preview.trade.tokenIn || input.tokenOut !== preview.trade.tokenOut || input.amount !== preview.trade.amount) throw new Error("preview_market_mismatch");
-      const quoted = preview.simulation?.simulatedReturnValue;
+      const quoted = preview.quote?.amountOut??preview.simulation?.simulatedReturnValue;
       if (!quoted || !/^\d+$/.test(quoted)) throw new Error("preview_quote_unavailable");
-      const amountIn = decimalToUnits(input.amount, 18);
+      const amountIn = preview.quote?.amountIn?BigInt(preview.quote.amountIn):decimalToUnits(input.amount, 18);
       if (amountIn === null) throw new Error("preview_amount_invalid");
       const quotedOut = BigInt(quoted);
-      const args = JSON.parse(preview.request.action.kind === "call" ? preview.request.action.functionArgs : "[]") as unknown;
-      const minOut = readMinimumOut(args);
+      const minOut = preview.quote?quotedOut*99n/100n:readMinimumOut(JSON.parse(preview.request.action.kind === "call" ? preview.request.action.functionArgs : "[]") as unknown);
       return { amountIn, availableBalance: amountIn, notionalUsdMicros: quotedOut, quotedOut, minOut };
     },
   };

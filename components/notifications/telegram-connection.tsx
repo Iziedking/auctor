@@ -103,16 +103,16 @@ export function TelegramConnection() {
                   <Copy /> {copied ? "Copied" : "Copy"}
                 </button>
               </div>
-              <p>
-                Open the Telegram link to connect automatically, or send <code>/connect {code}</code> to <b>@{username}</b> manually. Expires {new Date(expiresAt).toLocaleTimeString()}.
-              </p>
               <a
                 href={deepLink ?? `https://t.me/${username}`}
                 target="_blank"
                 rel="noreferrer"
               >
-                Connect Telegram <ExternalLink />
+                Open Telegram to connect <ExternalLink />
               </a>
+              <p className="telegramFallback">
+                If the link does not open, send <code>/connect {code}</code> to <b>@{username}</b>. Expires {new Date(expiresAt).toLocaleTimeString()}.
+              </p>
             </>
           ) : (
             <button type="button" onClick={() => void issue()} disabled={busy}>

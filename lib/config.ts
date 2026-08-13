@@ -8,6 +8,7 @@ export interface Config {
   readonly llm: { readonly provider: Provider; readonly model: string; readonly apiKey: string | null; readonly fallback: { readonly baseUrl: string; readonly model: string; readonly apiKey: string } | null };
   readonly budgets: { readonly researchUsdPerDay: number; readonly llmCallsPerDay: number };
   readonly research: { readonly providers: readonly {readonly name:string;readonly category:"market"|"onchain"|"sentiment"|"news";readonly endpoint:string}[];readonly adanosApiKey:string|null;readonly newsEndpoint:string|null };
+  readonly uniswap: { readonly apiKey:string|null; readonly baseUrl:string };
   readonly mockMode: boolean;
   readonly agent: { readonly id: string | null; readonly memoryUser: string | null; readonly memoryPassphrase: string | null; readonly memoryFolder: string };
   readonly notifications: { readonly telegramToken: string | null };
@@ -46,6 +47,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>> = r
     llm: { provider, model: env.LLM_MODEL?.trim() || defaultModel(provider), apiKey: llmKey, fallback: agentRouterFallback(env) },
     budgets: { researchUsdPerDay: nonNegativeNumber(env.RESEARCH_USD_PER_DAY, 0), llmCallsPerDay: nonNegativeInteger(env.LLM_CALLS_PER_DAY, 0) },
     research: { providers: parseResearchProviders(env.X402_RESEARCH_PROVIDERS,env.X402_RESEARCH_ENDPOINT,env.X402_RESEARCH_PROVIDER),adanosApiKey:optional(env.ADANOS_API_KEY),newsEndpoint:optional(env.FREE_CRYPTO_NEWS_ENDPOINT) },
+    uniswap: { apiKey:optional(env.UNISWAP_API_KEY),baseUrl:(env.UNISWAP_API_BASE_URL?.trim()||"https://trade-api.gateway.uniswap.org/v1").replace(/\/$/,"") },
     mockMode,
     agent: { id: agentId, memoryUser, memoryPassphrase, memoryFolder: optional(env.AGENT_MEMORY_FOLDER) ?? "project-x" },
     notifications: { telegramToken: optional(env.TELEGRAM_BOT_TOKEN) },

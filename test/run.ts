@@ -49,6 +49,8 @@ import "./research-orchestrator.test.ts";
 import "./research-provider-request.test.ts";
 import "./keyed-research.test.ts";
 import "./dexscreener.test.ts";
+import "./uniswap-client.test.ts";
+import "./uniswap-keeperhub-adapter.test.ts";
 import "./telegram-experience.test.ts";
 import "./siwe-message-validation.test.ts";
 import "./returning-wallet-auth.test.ts";

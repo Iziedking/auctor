@@ -107,7 +107,11 @@
   box-shadow: 0 14px 40px #17231b0b;
 }
 .chatTranscript {
+  height: min(58vh, 620px);
   min-height: 350px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   padding: 30px;
 }
 .chatTurn{display:flex;gap:12px;max-width:820px;margin:0 auto 18px;align-items:flex-start}.chatTurn p{margin:8px 0;padding:12px 15px;border-radius:14px;line-height:1.5}.userTurn{justify-content:flex-end}.userTurn p{background:#111813;color:#fff}.turnAvatar{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;font:700 10px var(--tech-mono);background:#e6ece7;color:#415149}.auctorAvatar{background:#dff2f1;color:#14777d}.turnContent{min-width:0;flex:1}.activityLine{display:flex;align-items:center;gap:8px;margin:12px 0;color:#5f7168;font-size:13px}.activityPulse{width:8px;height:8px;border-radius:50%;background:#16889a;box-shadow:0 0 0 4px #d8eeee;animation:activityPulse 1.2s infinite}@keyframes activityPulse{50%{opacity:.35;transform:scale(.8)}}.tokenEvidence{margin-top:16px;padding:16px;border:1px solid #d4dfd8;border-radius:10px;background:#f6faf7}.tokenEvidence>div:first-child{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.tokenEvidence span,.tokenEvidence small{display:block;color:#68766d;font-size:11px}.tokenStats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}.tokenStats span{padding-top:10px;border-top:1px solid #dce5de}.tokenStats b{display:block;margin-top:4px;color:#18251d;font-size:13px}.tokenEvidence small{margin-top:10px;color:#9b5a31}

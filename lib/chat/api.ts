@@ -32,7 +32,8 @@ export async function handleChatRequest(input: unknown, deps: { readonly pipelin
     } else if (deps.session && deps.identity && persisted.response.kind === "refused") {
       await deps.session.rememberDecision({ ...deps.identity, text: `Request refused safely: ${persisted.response.reason}. No transaction was submitted.`,type:"refusal",source:"web",correlationId:parsed.data.correlationId,metadata:{reason:persisted.response.reason} });
     }
-    return { status: 200 as const, body: { ...persisted.response, conversationId: persisted.conversationId,...(routed.reply?{interpretation:routed.reply}:{}),...(research?{researchUsed:[research]}:{}) } };
+    const personalized = personalize(persisted.response, deps.agent?.name ?? "Auctor");
+    return { status: 200 as const, body: { ...personalized, conversationId: persisted.conversationId,...(routed.reply?{interpretation:routed.reply}:{}),...(research?{researchUsed:[research]}:{}) } };
   }
   const result = deps.session && deps.identity ? await deps.session.handle({ ...parsed.data, ...deps.identity }) : await deps.pipeline.handle(parsed.data);
   if (deps.session && deps.identity && isExplicitPreference(parsed.data.text)) {
@@ -40,6 +41,7 @@ export async function handleChatRequest(input: unknown, deps: { readonly pipelin
   }
   return { status: 200 as const, body: result };
 }
+function personalize<T extends {kind:string;message?:string}>(response:T,name:string):T{return response.kind==="message"&&response.message?{...response,message:response.message.replace(/^Auctor\b/,name)}:response}
 
 function isExplicitPreference(text: string): boolean {
   return /^(remember|prefer|always|never)([ :]|$)/i.test(text);
