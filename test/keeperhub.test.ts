@@ -61,7 +61,7 @@ test("simulation retries one transient failure and validates the response", asyn
   if (result.ok) assert.equal(result.value.wouldRevert, false);
 });
 
-test("contract-call sends payable value as a JSON number",async()=>{let payload:any;const client=createKeeperHubClient({baseUrl:"https://example.test",apiKey:"kh_test",fetch:async(_url,init)=>{payload=JSON.parse(String(init?.body));return new Response(JSON.stringify({status:"simulated",gasEstimate:"1",wouldRevert:false}),{status:200})}});const result=await client.simulate(request);assert.equal(result.ok,true);assert.equal(payload.value,0.001);assert.equal(typeof payload.value,"number")});
+test("contract-call preserves the documented decimal payable value",async()=>{let payload:any;const client=createKeeperHubClient({baseUrl:"https://example.test",apiKey:"kh_test",fetch:async(_url,init)=>{payload=JSON.parse(String(init?.body));return new Response(JSON.stringify({status:"simulated",gasEstimate:"1",wouldRevert:false}),{status:200})}});const result=await client.simulate(request);assert.equal(result.ok,true);assert.equal(payload.value,"0.001")});
 
 test("completed status fails closed when a receipt is not verified", async () => {
   const client = createKeeperHubClient({
