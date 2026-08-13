@@ -13,6 +13,7 @@ export function TelegramConnection() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  const [deepLink, setDeepLink] = useState<string | null>(null);
   const load = useCallback(async () => {
     const response = await fetch("/backend/api/channels/telegram", {
       cache: "no-store",
@@ -38,6 +39,7 @@ export function TelegramConnection() {
         );
       setCode(body.code);
       setExpiresAt(body.expiresAt);
+      setDeepLink(body.deepLink ?? null);
       setState((current) => ({
         ...current,
         connected: false,
@@ -92,21 +94,24 @@ export function TelegramConnection() {
                 <button
                   type="button"
                   aria-label="Copy pairing command"
-                  onClick={async () => {await navigator.clipboard.writeText("/connect " + code);setCopied(true);window.setTimeout(()=>setCopied(false),1800)}}
+                  onClick={async () => {
+                    await navigator.clipboard.writeText("/connect " + code);
+                    setCopied(true);
+                    window.setTimeout(() => setCopied(false), 1800);
+                  }}
                 >
                   <Copy /> {copied ? "Copied" : "Copy"}
                 </button>
               </div>
               <p>
-                Send <code>/connect {code}</code> to <b>@{username}</b> before{" "}
-                {new Date(expiresAt).toLocaleTimeString()}.
+                Open the Telegram link to connect automatically, or send <code>/connect {code}</code> to <b>@{username}</b> manually. Expires {new Date(expiresAt).toLocaleTimeString()}.
               </p>
               <a
-                href={`https://t.me/${username}`}
+                href={deepLink ?? `https://t.me/${username}`}
                 target="_blank"
                 rel="noreferrer"
               >
-                Open @{username} <ExternalLink />
+                Connect Telegram <ExternalLink />
               </a>
             </>
           ) : (

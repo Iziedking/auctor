@@ -23,6 +23,7 @@ import { temporalRecallQuery } from "../../../../lib/memory/events.ts";
 import { createTelegramNotifier } from "../../../../lib/notifications/telegram.ts";
 import {
   handleConnectCommand,
+  handlePairingCommand,
   parseTelegramUpdate,
   telegramChatText,
 } from "../../../../lib/telegram/update.ts";
@@ -55,11 +56,46 @@ export async function POST(request: Request) {
     const pairing = createChannelPairingService({
       repository: createDrizzleChannelPairingRepository(database.db),
     });
-    const connectReply = await handleConnectCommand({ text, chatId, pairing });
+    const connectReply =
+      (await handlePairingCommand({ text, chatId, pairing })) ??
+      (await handleConnectCommand({ text, chatId, pairing }));
     if (connectReply) {
-      if (connectReply.startsWith("Telegram connected") && config.agent.memoryPassphrase) {
-        const connected = (await database.db.select({ userId: channelConnections.userId, agentId: channelConnections.agentId, memoryKey: memoryIdentities.memoryKey }).from(channelConnections).innerJoin(memoryIdentities, eq(memoryIdentities.userId, channelConnections.userId)).where(and(eq(channelConnections.provider, "telegram"), eq(channelConnections.externalIdentity, chatId))).limit(1))[0];
-        if (connected) await writeMemoryEvent({ memory: createMemoryClient({ baseUrl: config.memory.url }), userId: connected.userId, agentId: connected.agentId, memoryKey: connected.memoryKey, masterPassphrase: config.agent.memoryPassphrase, type: "telegram_connected", source: "telegram", content: "Telegram connected to this Auctor agent.", metadata: { telegram_chat_id: chatId } });
+      if (
+        connectReply.startsWith("Telegram connected") &&
+        config.agent.memoryPassphrase
+      ) {
+        const connected = (
+          await database.db
+            .select({
+              userId: channelConnections.userId,
+              agentId: channelConnections.agentId,
+              memoryKey: memoryIdentities.memoryKey,
+            })
+            .from(channelConnections)
+            .innerJoin(
+              memoryIdentities,
+              eq(memoryIdentities.userId, channelConnections.userId),
+            )
+            .where(
+              and(
+                eq(channelConnections.provider, "telegram"),
+                eq(channelConnections.externalIdentity, chatId),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (connected)
+          await writeMemoryEvent({
+            memory: createMemoryClient({ baseUrl: config.memory.url }),
+            userId: connected.userId,
+            agentId: connected.agentId,
+            memoryKey: connected.memoryKey,
+            masterPassphrase: config.agent.memoryPassphrase,
+            type: "telegram_connected",
+            source: "telegram",
+            content: "Telegram connected to this Auctor agent.",
+            metadata: { telegram_chat_id: chatId },
+          });
       }
       await telegram.send({ chatId, text: connectReply });
       return NextResponse.json({ ok: true });
@@ -127,7 +163,24 @@ export async function POST(request: Request) {
       recalledMemory,
     });
     if (!approved) {
-      if (config.agent.memoryPassphrase && (preview.kind === "preview" || preview.kind === "refused")) await writeMemoryEvent({ memory, userId: account.userId, agentId: account.agentId, memoryKey: account.memoryKey, masterPassphrase: config.agent.memoryPassphrase, type: preview.kind === "preview" ? "preview" : "refusal", source: "telegram", content: preview.kind === "preview" ? `Telegram previewed ${preview.trade.amount} ${preview.trade.tokenIn} to ${preview.trade.tokenOut} on ${preview.trade.chain}. Approval required.` : `Telegram request refused safely: ${preview.reason}.`, correlationId: `telegram-${update.message.message_id}-${chatId}` });
+      if (
+        config.agent.memoryPassphrase &&
+        (preview.kind === "preview" || preview.kind === "refused")
+      )
+        await writeMemoryEvent({
+          memory,
+          userId: account.userId,
+          agentId: account.agentId,
+          memoryKey: account.memoryKey,
+          masterPassphrase: config.agent.memoryPassphrase,
+          type: preview.kind === "preview" ? "preview" : "refusal",
+          source: "telegram",
+          content:
+            preview.kind === "preview"
+              ? `Telegram previewed ${preview.trade.amount} ${preview.trade.tokenIn} to ${preview.trade.tokenOut} on ${preview.trade.chain}. Approval required.`
+              : `Telegram request refused safely: ${preview.reason}.`,
+          correlationId: `telegram-${update.message.message_id}-${chatId}`,
+        });
       await telegram.send({ chatId, text: telegramChatText(preview) });
       return NextResponse.json({ ok: true });
     }
@@ -157,7 +210,32 @@ export async function POST(request: Request) {
         keeperHub,
       }),
     });
-    if (config.agent.memoryPassphrase) await writeMemoryEvent({ memory, userId: account.userId, agentId: account.agentId, memoryKey: account.memoryKey, masterPassphrase: config.agent.memoryPassphrase, type: result.kind === "executed" ? "execution" : "refusal", source: "telegram", content: result.kind === "executed" ? `Telegram approved execution ${result.audit.status}. Audit ${result.audit.id}; transaction ${result.audit.transactionHash ?? "pending receipt"}.` : `Telegram approved execution stopped safely: ${"error" in result ? result.error.message : result.reason}.`, correlationId: preview.request.correlationId, metadata: result.kind === "executed" ? { audit_id: result.audit.id, status: result.audit.status, transaction_hash: result.audit.transactionHash ?? null } : { reason: "error" in result ? result.error.message : result.reason } });
+    if (config.agent.memoryPassphrase)
+      await writeMemoryEvent({
+        memory,
+        userId: account.userId,
+        agentId: account.agentId,
+        memoryKey: account.memoryKey,
+        masterPassphrase: config.agent.memoryPassphrase,
+        type: result.kind === "executed" ? "execution" : "refusal",
+        source: "telegram",
+        content:
+          result.kind === "executed"
+            ? `Telegram approved execution ${result.audit.status}. Audit ${result.audit.id}; transaction ${result.audit.transactionHash ?? "pending receipt"}.`
+            : `Telegram approved execution stopped safely: ${"error" in result ? result.error.message : result.reason}.`,
+        correlationId: preview.request.correlationId,
+        metadata:
+          result.kind === "executed"
+            ? {
+                audit_id: result.audit.id,
+                status: result.audit.status,
+                transaction_hash: result.audit.transactionHash ?? null,
+              }
+            : {
+                reason:
+                  "error" in result ? result.error.message : result.reason,
+              },
+      });
     if (result.kind === "executed") {
       await telegram.send({
         chatId,
