@@ -1,0 +1,1 @@
+import{AgentOnboarding}from"../../components/onboarding/agent-onboarding";import{requireOnboardingAgent}from"../../lib/auth/server-session";export default async function OnboardingPage(){await requireOnboardingAgent();return <AgentOnboarding/>}

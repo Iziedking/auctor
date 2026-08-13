@@ -125,8 +125,8 @@ export function createChatPipeline(config: ChatPipelineConfig) {
 }
 
 export function createChatSession(deps: { readonly pipeline: ReturnType<typeof createChatPipeline>; readonly memory: SessionMemory }) {
-  async function recallMemory(input: { readonly user: string; readonly passphrase: string; readonly folder?: string; readonly text: string }): Promise<readonly string[]> {
-    const recalled = await deps.memory.recall({ user: input.user, passphrase: input.passphrase, query: input.text, ...(input.folder ? { folder: input.folder } : {}) });
+  async function recallMemory(input: { readonly user: string; readonly passphrase: string; readonly folder?: string; readonly text: string; readonly timeZone?:string }): Promise<readonly string[]> {
+    const recalled = await deps.memory.recall({ user: input.user, passphrase: input.passphrase, query: temporalRecallQuery(input.text,new Date(),input.timeZone), ...(input.folder ? { folder: input.folder } : {}) });
     return recalled.kind === "recalled" && Array.isArray(recalled.records) ? recalled.records : [];
   }
   return {
@@ -135,9 +135,10 @@ export function createChatSession(deps: { readonly pipeline: ReturnType<typeof c
       const recalledMemory = await recallMemory(input);
       return deps.pipeline.handle({ text: input.text, correlationId: input.correlationId, recalledMemory });
     },
-    async rememberDecision(input: { readonly user: string; readonly passphrase: string; readonly folder?: string; readonly text: string }): Promise<unknown> {
-      return deps.memory.remember(input);
+    async rememberDecision(input: { readonly user: string; readonly passphrase: string; readonly folder?: string; readonly text: string; readonly type?: MemoryEventType; readonly source?: MemoryEventSource; readonly correlationId?: string; readonly timeZone?:string; readonly metadata?: Readonly<Record<string,string|number|boolean|null>> }): Promise<unknown> {
+      return deps.memory.remember({ user: input.user, passphrase: input.passphrase, ...(input.folder ? { folder: input.folder } : {}), text: formatMemoryEvent({ type: input.type ?? "preference", source: input.source ?? "web", content: input.text, importance: input.type === "preference" || input.type === "policy_changed" ? "high" : "normal", ...(input.correlationId ? { correlationId: input.correlationId } : {}),...(input.timeZone?{timeZone:input.timeZone}:{}), ...(input.metadata ? { metadata: input.metadata } : {}) }) });
     },
   };
 }
 import type { Address, ExecutionRequest, KeeperHubClient, Simulation } from "../keeperhub/types.ts";
+import { formatMemoryEvent, temporalRecallQuery, type MemoryEventSource, type MemoryEventType } from "../memory/events.ts";

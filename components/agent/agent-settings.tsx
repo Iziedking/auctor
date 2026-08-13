@@ -1,0 +1,1 @@
+import{AgentSetup}from"./agent-setup";export function AgentSettings(){return <div className="settingsPage"><header><p className="eyebrow">Agent settings</p><h1>Policy, authority, and safety.</h1><p>Adjust how your persistent agent researches and acts. Execution remains enforced server-side.</p></header><AgentSetup/></div>}

@@ -4,7 +4,7 @@ test("audit renders the evidence dossier system", async ({ page }, testInfo) => 
   await page.goto("/audit?id=confirmed-base-swap");
   await expect(page.getByLabel("Command rail")).toBeVisible();
   await expect(page.getByLabel("Evidence dossier")).toBeVisible();
-  await expect(page.getByLabel("Telemetry")).toBeVisible();
+  await expect(page.locator(".telemetryHeader")).toBeVisible();
   await expect(page.getByLabel("Provenance inspector")).toBeVisible();
   await expect(page.getByText("INTENT", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("POLICY", { exact: true }).first()).toBeVisible();
@@ -22,6 +22,7 @@ test("refusal preserves its exact policy evidence", async ({ page }) => {
 });
 
 test("mobile dossier stays bounded and supports case switching", async ({ page }) => {
+  test.skip(test.info().project.name !== "mobile", "Mobile-only interaction");
   for (const width of [320, 344, 390, 412]) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto("/audit");

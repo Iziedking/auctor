@@ -72,6 +72,7 @@ export const agents = pgTable("agents", {
   khOrgId: text("kh_org_id"),
   khWalletAddress: text("kh_wallet_address"),
   khHmacSecretEncrypted: text("kh_hmac_secret_encrypted"),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

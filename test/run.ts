@@ -51,3 +51,5 @@ import "./keyed-research.test.ts";
 import "./telegram-experience.test.ts";
 import "./siwe-message-validation.test.ts";
 import "./returning-wallet-auth.test.ts";
+import "./judge-journey-structure.test.ts";
+import "./memory-events.test.ts";

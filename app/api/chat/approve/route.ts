@@ -12,6 +12,8 @@ import { createDatabase } from "../../../../lib/db/client.ts";
 import { createDrizzleExecutionRepository } from "../../../../lib/db/execution-repository.ts";
 import { createExecutionService } from "../../../../lib/execution/service.ts";
 import { createKeeperHubClient } from "../../../../lib/keeperhub/client.ts";
+import { createMemoryClient } from "../../../../lib/memory/client.ts";
+import { writeMemoryEvent } from "../../../../lib/memory/event-writer.ts";
 
 export async function POST(request: Request) {
   const token = (await cookies()).get("auctor_session")?.value;
@@ -28,18 +30,19 @@ export async function POST(request: Request) {
     const keeperHub = createKeeperHubClient({ baseUrl: config.keeperhub.baseUrl, apiKey: config.keeperhub.apiKey });
     const pipeline = createRuntimeChatPipeline({ ...config, keeperhub: { ...config.keeperhub, walletAddress: session.khWalletAddress } });
     const execution = createExecutionService({ repository: createDrizzleExecutionRepository(database.db), keeperHub });
+    const memory=createMemoryClient({baseUrl:config.memory.url});
     const response = await handleApprovalRequest(body, {
       enabled: true,
       approvalMode: "live",
       pipeline,
-      execute: async (preview, recalledMemory) => executeApprovedPreview({
+      execute: async (preview, recalledMemory) => {const result=await executeApprovedPreview({
         agentId: session.agentId,
         preview,
         recalledMemory,
         policyRepository: createDrizzleAgentPolicyRepository(database.db),
         marketData: createPreviewTradeMarketData(preview),
         execution,
-      }),
+      });if(config.agent.memoryPassphrase){const content=result.kind==="executed"?`Approved execution ${result.audit.status}. Audit ${result.audit.id}; transaction ${result.audit.transactionHash??"pending receipt"}.`:`Approved execution stopped safely: ${"error"in result?result.error.message:result.reason}.`;await writeMemoryEvent({memory,userId:session.userId,agentId:session.agentId,memoryKey:session.memoryKey,masterPassphrase:config.agent.memoryPassphrase,type:result.kind==="executed"?"execution":"refusal",source:"web",content,correlationId:preview.request.correlationId,metadata:result.kind==="executed"?{audit_id:result.audit.id,status:result.audit.status,transaction_hash:result.audit.transactionHash??null}:{reason:"error"in result?result.error.message:result.reason}})}return result;},
     });
     return NextResponse.json(response.body, { status: response.status });
   } catch (error) {

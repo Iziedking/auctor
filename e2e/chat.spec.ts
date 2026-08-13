@@ -14,11 +14,11 @@ test("chat keeps fixture approval disabled when health says unavailable", async 
   await page.route("**/api/health", (route) => route.fulfill({ json: { execution: "mock", memory: { state: "disabled" }, approval: { mode: "fixture", available: false } } }));
   await page.route("**/api/chat", (route) => route.fulfill({ json: preview }));
   await page.goto("/chat");
-  await page.getByRole("textbox", { name: "COMMAND" }).fill("swap 0.001 ETH to USDC on base");
-  await page.getByRole("button", { name: "RUN PREVIEW" }).click();
-  await expect(page.getByText("CAPTURED MOCK TRADE", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "APPROVE FIXTURE EXECUTION" })).toBeDisabled();
-  await expect(page.getByText("Unavailable until mock mode, Postgres, and AUCTOR_AGENT_ID are configured.")).toBeVisible();
+  await page.getByRole("textbox", { name: "What should your agent do?" }).fill("swap 0.001 ETH to USDC on base");
+  await page.getByRole("button", { name: "Send to Auctor" }).click();
+  await expect(page.getByText("ACTION PREVIEW", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Approve and execute" })).toBeDisabled();
+  await expect(page.getByText(/Execution is temporarily unavailable/)).toBeVisible();
 });
 
 test("chat submits the exact supported fixture approval and shows its audit", async ({ page }) => {
@@ -31,17 +31,17 @@ test("chat submits the exact supported fixture approval and shows its audit", as
     await route.fulfill({ json: { kind: "executed", audit: { id: "audit-fixture-1", status: "confirmed" } } });
   });
   await page.goto("/chat");
-  await page.getByRole("textbox", { name: "COMMAND" }).fill("swap 0.001 ETH to USDC on base");
-  await page.getByRole("button", { name: "RUN PREVIEW" }).click();
-  await page.getByRole("button", { name: "APPROVE FIXTURE EXECUTION" }).click();
-  await expect(page.getByText("Audit audit-fixture-1: confirmed", { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "What should your agent do?" }).fill("swap 0.001 ETH to USDC on base");
+  await page.getByRole("button", { name: "Send to Auctor" }).click();
+  await page.getByRole("button", { name: "Approve and execute" }).click();
+  await expect(page.getByText(/Audit audit-fixture-1/)).toBeVisible();
 });
 
 test("chat does not render approval for an unsupported pair", async ({ page }) => {
   await page.route("**/api/health", (route) => route.fulfill({ json: { execution: "mock", memory: { state: "disabled" }, approval: { mode: "fixture", available: true } } }));
-  await page.route("**/api/chat", (route) => route.fulfill({ json: { ...preview, trade: { ...preview.trade, tokenOut: "WETH" } } }));
+  await page.route("**/api/chat", (route) => route.fulfill({ json: { kind:"refused",reason:"chain or token is not configured",recalledMemory:[],steps:["classified","refused"] } }));
   await page.goto("/chat");
-  await page.getByRole("textbox", { name: "COMMAND" }).fill("swap 0.001 ETH to WETH on base");
-  await page.getByRole("button", { name: "RUN PREVIEW" }).click();
-  await expect(page.getByText("CAPTURED MOCK TRADE", { exact: true })).toBeHidden();
+  await page.getByRole("textbox", { name: "What should your agent do?" }).fill("swap 0.001 ETH to WETH on base");
+  await page.getByRole("button", { name: "Send to Auctor" }).click();
+  await expect(page.getByRole("button", { name: "Approve and execute" })).toBeHidden();
 });

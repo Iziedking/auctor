@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { validateAgentSetup } from "../lib/agent/setup.ts";
+import { isAgentOnboardingComplete } from "../lib/agent/onboarding.ts";
 import { chainsForEnvironment, faucetForChain, inferChainEnvironment, isLegacyMainnetDefault } from "../lib/chains.ts";
 test("agent setup defaults to one manual Auctor agent",()=>{const setup=validateAgentSetup({});assert.equal(setup.name,"Auctor Agent");assert.equal(setup.autonomyMode,"manual");assert.equal(setup.budgetUsd,0);assert.deepEqual(setup.allowedTokens,[]);assert.equal(setup.maxSlippageBps,100)});
 test("agent setup rejects caps above their parent budget",()=>{assert.throws(()=>validateAgentSetup({budgetUsd:100,dailyCapUsd:110}),/Daily cap/);assert.throws(()=>validateAgentSetup({budgetUsd:100,dailyCapUsd:50,perTradeCapUsd:60}),/Per-trade cap/)});
@@ -8,3 +9,5 @@ test("autonomous setup remains explicitly bounded",()=>{const setup=validateAgen
 test("default setup starts safely on KeeperHub testnets",()=>{const setup=validateAgentSetup({});assert.deepEqual(setup.allowedChains,["11155111","84532"]);assert.equal(inferChainEnvironment(setup.allowedChains),"testnet")});
 test("testnet mode exposes only Sepolia networks and their faucets",()=>{assert.deepEqual(chainsForEnvironment("testnet").map(chain=>chain.id),["11155111","84532"]);assert.match(faucetForChain("11155111")!,/sepolia/i);assert.match(faucetForChain("84532")!,/base/i);assert.equal(inferChainEnvironment(["84532"]),"testnet")});
 test("only the exact legacy all-mainnet policy is eligible for a safe testnet upgrade",()=>{assert.equal(isLegacyMainnetDefault(["1","8453","42161","10","137","56","43114","130"]),true);assert.equal(isLegacyMainnetDefault(["8453"]),false);assert.equal(isLegacyMainnetDefault(["11155111","84532"]),false)});
+test("onboarding completion is explicit and independent of budget values",()=>{assert.equal(isAgentOnboardingComplete({onboardingCompletedAt:null}),false);assert.equal(isAgentOnboardingComplete({onboardingCompletedAt:new Date(),budgetUsd:"0"}),true)});
+test("agent setup validates the operating profile",()=>{const setup=validateAgentSetup({name:"Atlas",riskProfile:"conservative",tradingStyle:"Protect capital and research before trading",budgetUsd:10,dailyCapUsd:5,perTradeCapUsd:2});assert.equal(setup.riskProfile,"conservative");assert.match(setup.tradingStyle,/research/);assert.throws(()=>validateAgentSetup({tradingStyle:""}),/mandate/i)});

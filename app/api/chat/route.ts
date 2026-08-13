@@ -19,6 +19,7 @@ import { createDrizzleResearchRepository } from "../../../lib/db/research-reposi
 import { createPaidResearchService } from "../../../lib/research/x402.ts";
 import { createKeyedResearchService } from "../../../lib/research/keyed.ts";
 import { createResearchRouter } from "../../../lib/research/router.ts";
+import { writeMemoryEvent } from "../../../lib/memory/event-writer.ts";
 export async function POST(request: Request) {
   const config = loadConfig(runtimeEnvironment());
   const token = (await cookies()).get("auctor_session")?.value;
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
       adanosApiKey: config.research.adanosApiKey,
       newsEndpoint: config.research.newsEndpoint,
     });
-    const research =
+    const researchRouter =
       config.research.providers.length ||
       config.research.adanosApiKey ||
       config.research.newsEndpoint
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
             hasNews: Boolean(config.research.newsEndpoint),
           })
         : undefined;
+    const research = researchRouter ? { run: async (text:string) => { const result = await researchRouter.run(text); if (result) await writeMemoryEvent({ memory, userId: session.userId, agentId: session.agentId, memoryKey: session.memoryKey, masterPassphrase: config.agent.memoryPassphrase!, type: "research", source: "web", content: `Research completed for: ${text}`, metadata: { provider_evidence: JSON.stringify(result).slice(0, 1500) } }); return result; } } : undefined;
     const response = await handleChatRequest(body, {
       pipeline,
       session: chatSession,

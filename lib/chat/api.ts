@@ -7,6 +7,7 @@ const requestSchema = z.object({
   correlationId: z.string().trim().min(1).max(128),
   conversationId: z.string().uuid().optional(),
   approved: z.boolean().optional(),
+  timeZone: z.string().trim().min(1).max(64).optional(),
 }).strict();
 
 type Pipeline = ReturnType<typeof createChatPipeline>;
@@ -19,18 +20,23 @@ export async function handleChatRequest(input: unknown, deps: { readonly pipelin
   const parsed = requestSchema.safeParse(input);
   if (!parsed.success) return { status: 400 as const, body: { error: "invalid_request" as const } };
   if (deps.conversation && deps.agentId) {
-    const recalledMemory = deps.session && deps.identity ? await deps.session.recallMemory({ text: parsed.data.text, ...deps.identity }) : [];
+    const recalledMemory = deps.session && deps.identity ? await deps.session.recallMemory({ text: parsed.data.text, ...deps.identity,...(parsed.data.timeZone?{timeZone:parsed.data.timeZone}:{}) }) : [];
     const routed=deps.language&&deps.agent?await deps.language.route({text:parsed.data.text,memory:recalledMemory,agent:deps.agent}):{text:parsed.data.text,source:"fallback" as const};
     const research=deps.research?await deps.research.run(parsed.data.text):null;
     const persisted = await deps.conversation.handle({ agentId: deps.agentId, text: routed.text, correlationId: parsed.data.correlationId, ...(parsed.data.conversationId ? { conversationId: parsed.data.conversationId } : {}), recalledMemory });
     if (deps.session && deps.identity && isExplicitPreference(parsed.data.text)) {
-      await deps.session.rememberDecision({ ...deps.identity, text: parsed.data.text });
+      await deps.session.rememberDecision({ ...deps.identity, text: parsed.data.text,type:"preference",source:"web",correlationId:parsed.data.correlationId,...(parsed.data.timeZone?{timeZone:parsed.data.timeZone}:{}) });
+    }
+    if (deps.session && deps.identity && persisted.response.kind === "preview") {
+      await deps.session.rememberDecision({ ...deps.identity, text: `Previewed ${persisted.response.trade.amount} ${persisted.response.trade.tokenIn} to ${persisted.response.trade.tokenOut} on ${persisted.response.trade.chain}. Approval is still required.`,type:"preview",source:"web",correlationId:parsed.data.correlationId,...(parsed.data.timeZone?{timeZone:parsed.data.timeZone}:{}),metadata:{chain:persisted.response.trade.chain,token_in:persisted.response.trade.tokenIn,token_out:persisted.response.trade.tokenOut,amount:persisted.response.trade.amount} });
+    } else if (deps.session && deps.identity && persisted.response.kind === "refused") {
+      await deps.session.rememberDecision({ ...deps.identity, text: `Request refused safely: ${persisted.response.reason}. No transaction was submitted.`,type:"refusal",source:"web",correlationId:parsed.data.correlationId,metadata:{reason:persisted.response.reason} });
     }
     return { status: 200 as const, body: { ...persisted.response, conversationId: persisted.conversationId,...(routed.reply?{interpretation:routed.reply}:{}),...(research?{researchUsed:[research]}:{}) } };
   }
   const result = deps.session && deps.identity ? await deps.session.handle({ ...parsed.data, ...deps.identity }) : await deps.pipeline.handle(parsed.data);
   if (deps.session && deps.identity && isExplicitPreference(parsed.data.text)) {
-    await deps.session.rememberDecision({ ...deps.identity, text: parsed.data.text });
+    await deps.session.rememberDecision({ ...deps.identity, text: parsed.data.text,type:"preference",source:"web",correlationId:parsed.data.correlationId });
   }
   return { status: 200 as const, body: result };
 }
