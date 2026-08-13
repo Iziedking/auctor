@@ -71,6 +71,8 @@ export function classifyChat(text: string): ChatIntent {
   }
   const naturalTrade = /^(swap|trade) ([0-9]+(?:[.][0-9]+)?) (base sepolia|ethereum sepolia|sepolia|base) ([a-z0-9]+) to ([a-z0-9]+)$/.exec(normalized);
   if (naturalTrade?.[2] && naturalTrade[3] && naturalTrade[4] && naturalTrade[5]) return { kind:"trade", amount:naturalTrade[2], tokenIn:naturalTrade[4].toUpperCase(), tokenOut:naturalTrade[5].toUpperCase(), chain:normalizeChain(naturalTrade[3]) };
+  const tokenThenChainTrade=/^(swap|trade) ([0-9]+(?:[.][0-9]+)?) ([a-z0-9]+) on (base sepolia|ethereum sepolia|sepolia|base) to ([a-z0-9]+)$/.exec(normalized);
+  if(tokenThenChainTrade?.[2]&&tokenThenChainTrade[3]&&tokenThenChainTrade[4]&&tokenThenChainTrade[5])return{kind:"trade",amount:tokenThenChainTrade[2],tokenIn:tokenThenChainTrade[3].toUpperCase(),tokenOut:tokenThenChainTrade[5].toUpperCase(),chain:normalizeChain(tokenThenChainTrade[4])};
   return { kind: "unknown", text: text.trim() };
 }
 function normalizeChain(value:string){if(value==="base sepolia")return"base-sepolia";if(value==="ethereum sepolia")return"sepolia";return value}

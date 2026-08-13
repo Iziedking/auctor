@@ -31,6 +31,7 @@ test("chat classifies only the bounded swap grammar as a trade intent", () => {
 test("chat accepts natural Base Sepolia network placement", () => {
   assert.deepEqual(classifyChat("swap 0.01 base sepolia eth to usdc"), { kind:"trade", amount:"0.01", tokenIn:"ETH", tokenOut:"USDC", chain:"base-sepolia" });
 });
+test("chat accepts a network between the input and output tokens",()=>{assert.deepEqual(classifyChat("swap 0.01 eth on sepolia to usdc"),{kind:"trade",amount:"0.01",tokenIn:"ETH",tokenOut:"USDC",chain:"sepolia"})});
 
 test("safe trade templates construct an execution request without model-generated calls", () => {
   const result = buildTradeRequest(
