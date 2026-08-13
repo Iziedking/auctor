@@ -106,7 +106,7 @@ function body(req: ExecutionRequest, simulate: boolean): Record<string, unknown>
       functionName: req.action.functionName,
       functionArgs: req.action.functionArgs,
       abi: req.action.abi,
-      value: req.action.value,
+      ...(req.action.value !== undefined ? { value: Number(req.action.value) } : {}),
       simulate,
     };
   }
