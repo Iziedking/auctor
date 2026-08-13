@@ -54,7 +54,7 @@ export function classifyChat(text: string): ChatIntent {
   if (/^(cancel|stop|abort)([ ]|$)/.test(normalized)) {
     return { kind: "cancel" };
   }
-  if (normalized === "portfolio" || /(portfolio|wallet balance|balances|holdings|positions)/.test(normalized)) {
+  if (normalized === "portfolio" || /(portfolio|balance|balances|holdings|positions)/.test(normalized)) {
     return { kind: "portfolio" };
   }
   const trade = /^(swap|trade) ([0-9]+([.][0-9]+)?) ([a-z0-9]+) to ([a-z0-9]+) on ([a-z0-9-]+)$/.exec(normalized);

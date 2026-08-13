@@ -7,6 +7,7 @@ test("chat prefilter handles greeting help and cancel without a model", () => {
   assert.deepEqual(classifyChat("what can you do?"), { kind: "help" });
   assert.deepEqual(classifyChat("cancel that transaction"), { kind: "cancel" });
 });
+test("chat treats singular chain-specific balance questions as portfolio intent",()=>{assert.deepEqual(classifyChat("what is my balance?"),{kind:"portfolio"});assert.deepEqual(classifyChat("my base sepolia balance"),{kind:"portfolio"})});
 
 test("chat prefilter acknowledges an explicit preference", async () => {
   const pipeline = createChatPipeline({ mode: "mock", chains: { base: "8453" }, tokens: { USDC: "0x1111111111111111111111111111111111111111", WETH: "0x2222222222222222222222222222222222222222" }, router: "0x3333333333333333333333333333333333333333" });
