@@ -50,7 +50,7 @@ export async function handleConnectCommand(input: {
 export function telegramChatText(result: ChatPipelineResult) {
   if (result.kind === "message") return result.message;
   if (result.kind === "refused")
-    return `Auctor stopped safely: ${result.reason}`;
+    return `Auctor stopped safely: ${friendlyReason(result.reason)}`;
   return [
     `Preview ready: ${result.trade.amount} ${result.trade.tokenIn} → ${result.trade.tokenOut} on ${result.trade.chain}.`,
     result.simulation?.wouldRevert
@@ -59,3 +59,4 @@ export function telegramChatText(result: ChatPipelineResult) {
     `To execute, send: /approve swap ${result.trade.amount} ${result.trade.tokenIn} to ${result.trade.tokenOut} on ${result.trade.chain}`,
   ].join("\n");
 }
+function friendlyReason(reason:string){const messages:Record<string,string>={token_not_found_on_chain:"I could not find that token on this network. Use its contract address or confirm the symbol and network.",token_symbol_ambiguous_use_address:"That symbol matches multiple tokens. Send the token contract address.",unsupported_intent:"I need a clearer request. Ask for your balance, portfolio, research, or an exact swap.",token_approval_required_before_swap:"The input token needs approval before it can be swapped."};return messages[reason]??reason.replaceAll("_"," ")}

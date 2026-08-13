@@ -104,7 +104,7 @@ export async function POST(request: Request) {
             hasNews: Boolean(config.research.newsEndpoint),
           })
         : undefined;
-    const research = { run: async (text:string) => { const token = await discoverDexToken(text).catch(() => null); const paid = researchRouter ? await researchRouter.run(text).catch(() => null) : null; const result = token || paid ? { ...(token ? { token } : {}), ...(paid ? { paid } : {}) } : null; if (result) await writeMemoryEvent({ memory, userId: session.userId, agentId: session.agentId, memoryKey: session.memoryKey, masterPassphrase: config.agent.memoryPassphrase!, type: "research", source: "web", content: `Research completed for: ${text}`, metadata: { provider_evidence: JSON.stringify(result).slice(0, 1500) } }); return result; } };
+    const research = { run: async (text:string) => { if (/\b(portfolio|balance|holdings|wallet)\b/i.test(text) || /\b(swap|trade|buy|sell)\b/i.test(text)) return null; const token = await discoverDexToken(text).catch(() => null); const paid = researchRouter ? await researchRouter.run(text).catch(() => null) : null; const result = token || paid ? { ...(token ? { token } : {}), ...(paid ? { paid } : {}) } : null; if (result) await writeMemoryEvent({ memory, userId: session.userId, agentId: session.agentId, memoryKey: session.memoryKey, masterPassphrase: config.agent.memoryPassphrase!, type: "research", source: "web", content: `Research completed for: ${text}`, metadata: { provider_evidence: JSON.stringify(result).slice(0, 1500) } }); return result; } };
     const response = await handleChatRequest(body, {
       pipeline,
       session: chatSession,

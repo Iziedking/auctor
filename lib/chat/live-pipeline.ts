@@ -1,6 +1,7 @@
 import type { Address, ExecutionRequest, KeeperHubClient } from "../keeperhub/types.ts";
 import { classifyChat, type ChatPipelineResult } from "./pipeline.ts";
-import { parseUnits } from "viem";
+import { createPublicClient, formatEther, http, parseUnits } from "viem";
+import { mainnet, base, sepolia, baseSepolia } from "viem/chains";
 import { createUniswapTradingClient } from "../uniswap/client.ts";
 import { resolveSwapToken } from "../uniswap/token-resolver.ts";
 import { uniswapSwapRequest } from "../uniswap/keeperhub-adapter.ts";
@@ -21,7 +22,7 @@ export function createLiveChatPipeline(input: {
       if (intent.kind === "greeting") return { kind: "message", message: "Auctor is ready.", steps: ["classified"], recalledMemory };
       if (intent.kind === "help") return { kind: "message", message: "Live execution supports guarded ETH to USDC swaps on Base, Ethereum Sepolia, and Base Sepolia.", steps: ["classified"], recalledMemory };
       if (intent.kind === "cancel") return { kind: "message", message: "No transaction was submitted.", steps: ["classified", "cancelled"], recalledMemory };
-      if (intent.kind === "portfolio") return { kind: "message", message: "Open Portfolio to inspect your agent wallet and refresh its live balances. Testnet balances are shown in native units without misleading USD valuation.", steps: ["classified", "portfolio"], recalledMemory };
+      if (intent.kind === "portfolio") { const chain=portfolioChain(command.text);const balance=await createPublicClient({chain,transport:http()}).getBalance({address:input.walletAddress});const warning=balance===0n?` Funding alert: your agent wallet has zero ${chain.nativeCurrency.symbol}. Fund ${input.walletAddress} before requesting a swap.`:"";return{kind:"message",message:`Your agent wallet ${input.walletAddress} has ${formatEther(balance)} ${chain.nativeCurrency.symbol} on ${chain.name}.${warning}`,steps:["classified","portfolio","balance_read"],recalledMemory}; }
       if (intent.kind === "preference") return { kind: "message", message: "Preference noted.", steps: ["classified", "remembered"], recalledMemory };
       if (intent.kind !== "trade") return { kind: "refused", reason: "unsupported_intent", steps: ["classified", "refused"], recalledMemory };
       if(input.uniswap){try{const chainId=Number(chainIdFor(intent.chain));const [tokenIn,tokenOut]=await Promise.all([resolveSwapToken({value:intent.tokenIn,chainId}),resolveSwapToken({value:intent.tokenOut,chainId})]);const amount=parseUnits(intent.amount,tokenIn.decimals).toString();const prepared=await createUniswapTradingClient(input.uniswap).prepareExactInput({swapper:input.walletAddress,tokenIn:tokenIn.address,tokenOut:tokenOut.address,chainId,amount,slippageTolerance:slippageBps/100});if(prepared.approval)return{kind:"refused",reason:"token_approval_required_before_swap",steps:["classified","quoted","approval_required"],recalledMemory};const request=uniswapSwapRequest({prepared,correlationId:command.correlationId});const simulation=await input.simulator.simulate(request);if(!simulation.ok||simulation.value.wouldRevert)return{kind:"refused",reason:simulation.ok?simulation.value.revertReason??"simulation_would_revert":simulation.error.message,steps:["classified","quoted","simulated","refused"],recalledMemory};return{kind:"preview",request,trade:{amount:intent.amount,tokenIn:tokenIn.symbol,tokenOut:tokenOut.symbol,chain:intent.chain},simulation:simulation.value,quote:{amountIn:prepared.quote.amountIn,amountOut:prepared.quote.amountOut,gasFeeUsd:prepared.quote.gasFeeUsd},approvalRequired:true,checks:["tokens_resolved","uniswap_route","slippage_bounded","keeperhub_simulation_passed","approval_required"],steps:["classified","resolved","quoted","simulated","previewed"],recalledMemory}}catch(error){return{kind:"refused",reason:error instanceof Error?error.message:"uniswap_quote_failed",steps:["classified","refused"],recalledMemory}}}
@@ -41,6 +42,7 @@ export function createLiveChatPipeline(input: {
   };
 }
 function chainIdFor(value:string){const found:ObjectEntries=({ethereum:"1",mainnet:"1",base:"8453",arbitrum:"42161",optimism:"10",polygon:"137",bnb:"56",avalanche:"43114",unichain:"130",sepolia:"11155111","base-sepolia":"84532"} as const);const id=(found as Record<string,string>)[value];if(!id)throw new Error("uniswap_chain_unsupported");return id}
+function portfolioChain(text:string){const value=text.toLowerCase();if(value.includes("base sepolia")||value.includes("testnet"))return baseSepolia;if(value.includes("sepolia"))return sepolia;if(value.includes("base"))return base;return mainnet}
 type ObjectEntries=Record<string,string>;
 
 function swapRequest(network:(typeof networks)[keyof typeof networks],correlationId: string, recipient: Address, amount: string, amountIn: bigint, amountOutMinimum: bigint): ExecutionRequest {
