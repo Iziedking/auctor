@@ -16,7 +16,9 @@ type ChatResult = {
   approvalRequired?: boolean;
   checks?: readonly string[];
   request?: { chainId: string; action: { functionName: string; to: string } };
+  researchUsed?: readonly [{ token?: { symbol:string; name:string; chainId:string; priceUsd:number|null; liquidityUsd:number|null; volume24hUsd:number|null; change24hPct:number|null; url:string; executionEligible:boolean; riskNotes:string[] }; paid?: { source?:string; paid?:boolean; priceUsd?:number|null; paymentTx?:string|null; refusedReason?:string|null } }];
 };
+type Turn={id:string;role:"user"|"agent";text:string;result?:ChatResult;pending?:boolean};
 type ChatError = { error?: string; reason?: string };
 type ApprovalResult =
   | {
@@ -53,6 +55,7 @@ export function ChatWorkspace() {
   const [approving, setApproving] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [agent, setAgent] = useState<AgentProfile | null>(null);
+  const [turns, setTurns] = useState<Turn[]>([]);
   useEffect(() => {
     void Promise.all([
       fetch("/backend/api/health", { cache: "no-store" })
@@ -69,6 +72,8 @@ export function ChatWorkspace() {
     if (!command || busy) return;
     setBusy(true);
     setApproval(null);
+    const turnId = "turn-" + Date.now();
+    setTurns((current) => [...current, { id: turnId + "-u", role: "user", text: command }, { id: turnId + "-a", role: "agent", text: "Auctor is working through your request…", pending: true }]);
     try {
       const timeZone =
         Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -82,6 +87,7 @@ export function ChatWorkspace() {
       const next=response.ok&&isChatResult(body)?body:{kind:"refused",reason:chatErrorMessage(body,response.status),recalledMemory:[]};
       setResult(next);
       setSubmittedText(command);
+      setTurns((current) => current.map((turn) => turn.id === turnId + "-a" ? { ...turn, text: next.kind === "refused" ? naturalReason(next.reason) : next.message || "Here’s what I found.", result: next, pending: false } : turn));
       if (next.conversationId) setConversationId(next.conversationId);
     } finally {
       setBusy(false);
@@ -203,8 +209,8 @@ export function ChatWorkspace() {
         </div>
         <div className="conversationPanel">
           <div className="chatTranscript" aria-live="polite">
-            {result ? (
-              <article className={"chatResult " + result.kind}>
+            {turns.length ? turns.map((turn) => turn.role === "user" ? <div className="chatTurn userTurn" key={turn.id}><div className="turnAvatar">You</div><p>{turn.text}</p></div> : <article className={"chatResult " + (turn.result?.kind ?? "pending")} key={turn.id}><div className="turnAvatar auctorAvatar">A</div><div className="turnContent"><span className="chatResultLabel">AUCTOR</span>{turn.pending ? <div className="activityLine"><span className="activityPulse" /> Interpreting · recalling memory · researching · checking policy · simulating with KeeperHub</div> : <><p>{turn.text}</p>{turn.result?.interpretation && <div className="interpretation"><span>UNDERSTOOD AS</span><p>{turn.result.interpretation}</p></div>}{turn.result?.researchUsed?.[0]?.token && <TokenEvidence token={turn.result.researchUsed[0].token} />}</>}</div></article>) : (
+              result && <article className={"chatResult " + result.kind}>
                 <span className="chatResultLabel">
                   {result.kind === "preview"
                     ? "ACTION PREVIEW"
@@ -295,30 +301,6 @@ export function ChatWorkspace() {
                 )}
                 {approval && <ApprovalView approval={approval} />}
               </article>
-            ) : (
-              <div className="chatEmpty">
-                <p>Start with a goal, not transaction syntax.</p>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setText("Swap 0.001 ETH to USDC on Base")}
-                  >
-                    Swap ETH safely
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setText("How is my portfolio?")}
-                  >
-                    Review my portfolio
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setText("Remember: never risk more than 5%")}
-                  >
-                    Set a preference
-                  </button>
-                </div>
-              </div>
             )}
           </div>
           <form className="chatComposer" onSubmit={submit}>
@@ -388,4 +370,6 @@ function postChat(body:unknown){return fetch("/backend/api/chat",{method:"POST",
 async function safeJson(response:Response):Promise<unknown>{try{return await response.json()}catch{return{error:"invalid_response"}}}
 function isChatResult(value:unknown):value is ChatResult{return Boolean(value&&typeof value==="object"&&"kind"in value&&typeof(value as {kind?:unknown}).kind==="string")}
 function chatErrorMessage(value:unknown,status:number){if(value&&typeof value==="object"){const item=value as ChatError;if(typeof item.reason==="string")return item.reason;if(typeof item.error==="string")return humanize(item.error)}return`Command service returned HTTP ${status}. No transaction was submitted.`}
+function naturalReason(reason?:string){if(!reason)return "I couldn’t complete that safely yet. Tell me what asset, amount, chain, or condition you want.";if(reason.includes("unsupported_intent"))return "I’m not sure what action you want yet. Try ‘check $ANSEM’, ‘buy 10 USDC of ETH on Sepolia’, or ‘watch this token’.";return reason}
+function TokenEvidence({token}:{token:NonNullable<NonNullable<ChatResult["researchUsed"]>[number]["token"]>}){return <div className="tokenEvidence"><div><b>{token.name} ({token.symbol})</b><span>{token.chainId} · {token.executionEligible?"EVM execution available":"Research only · Solana execution planned for V2"}</span></div><div className="tokenStats"><span>Price <b>{token.priceUsd===null?"—":`$${token.priceUsd}`}</b></span><span>Liquidity <b>{token.liquidityUsd===null?"—":`$${Math.round(token.liquidityUsd).toLocaleString()}`}</b></span><span>24h volume <b>{token.volume24hUsd===null?"—":`$${Math.round(token.volume24hUsd).toLocaleString()}`}</b></span></div>{token.riskNotes.map(note=><small key={note}>{note}</small>)}</div>}
 function lifecycleState(input:{result:ChatResult|null;approval:ApprovalResult|null;busy:boolean;approving:boolean}){const memory=Boolean(input.result?.recalledMemory?.length);const research=Boolean(input.result&&"researchUsed"in input.result);const refused=input.result?.kind==="refused";const executed=Boolean(input.approval&&"audit"in input.approval);const approvalStopped=Boolean(input.approval&&!("audit"in input.approval));const details=["Intent bounded","Context recalled","Evidence gathered","Limits enforced","KeeperHub preview","Human gate","KeeperHub submit","Receipt trail"];return lifecycle.map((label,index)=>{let state:"complete"|"current"|"pending"|"stopped"="pending";if(input.busy||!input.result)state=index===0?"current":"pending";else if(refused)state=index<4?"complete":index===4?"stopped":"pending";else if(input.result.kind!=="preview")state=index===0||index===1&&memory||index===2&&research?"complete":index===3?"current":"pending";else if(executed)state="complete";else if(approvalStopped)state=index<6?"complete":index===6?"stopped":"pending";else if(input.approving)state=index<6?"complete":index===6?"current":"pending";else state=index<5?"complete":index===5?"current":"pending";return{label,state,detail:index===1&&!memory?"No relevant memory":index===2&&!research?"Not requested":details[index]!}})}
