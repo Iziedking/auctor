@@ -45,3 +45,7 @@ test("chat does not render approval for an unsupported pair", async ({ page }) =
   await page.getByRole("button", { name: "Send to Auctor" }).click();
   await expect(page.getByRole("button", { name: "Approve and execute" })).toBeHidden();
 });
+
+test("chat retries an older backend without timezone and never crashes on API errors",async({page})=>{let calls=0;await page.route("**/api/chat",async route=>{calls++;const body=route.request().postDataJSON()as{timeZone?:string};if(calls===1){expect(body.timeZone).toBeTruthy();await route.fulfill({status:400,json:{error:"invalid_request"}})}else{expect(body.timeZone).toBeUndefined();await route.fulfill({json:{kind:"message",message:"Auctor is ready.",recalledMemory:[],steps:["classified"]}})}});await page.goto("/chat");const box=page.getByRole("textbox",{name:"What should your agent do?"});await box.fill("hello");await box.press("Enter");await expect(page.getByText("Auctor is ready.",{exact:true})).toBeVisible();expect(calls).toBe(2)});
+
+test("shift enter creates a newline without sending",async({page})=>{let calls=0;await page.route("**/api/chat",route=>{calls++;return route.fulfill({json:{kind:"message",message:"sent",recalledMemory:[]}})});await page.goto("/chat");const box=page.getByRole("textbox",{name:"What should your agent do?"});await box.fill("line one");await box.press("Shift+Enter");await box.type("line two");expect(await box.inputValue()).toContain("\n");expect(calls).toBe(0)});

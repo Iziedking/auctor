@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ArrowRight, Check, CheckCircle2, Circle, ExternalLink, X } from "lucide-react";
 import { AuctorSymbol } from "../brand/auctor-symbols";
 
@@ -17,6 +17,7 @@ type ChatResult = {
   checks?: readonly string[];
   request?: { chainId: string; action: { functionName: string; to: string } };
 };
+type ChatError = { error?: string; reason?: string };
 type ApprovalResult =
   | {
       kind: "executed";
@@ -71,17 +72,14 @@ export function ChatWorkspace() {
     try {
       const timeZone =
         Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-      const response = await fetch("/backend/api/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          text: command,
-          correlationId: "chat-" + Date.now(),
-          timeZone,
-          ...(conversationId ? { conversationId } : {}),
-        }),
-      });
-      const next = (await response.json()) as ChatResult;
+      const correlationId="chat-"+Date.now();
+      let response=await postChat({text:command,correlationId,timeZone,...(conversationId?{conversationId}:{})});
+      let body=await safeJson(response);
+      if(!response.ok&&response.status===400&&(body as ChatError).error==="invalid_request"){
+        response=await postChat({text:command,correlationId,...(conversationId?{conversationId}:{})});
+        body=await safeJson(response);
+      }
+      const next=response.ok&&isChatResult(body)?body:{kind:"refused",reason:chatErrorMessage(body,response.status),recalledMemory:[]};
       setResult(next);
       setSubmittedText(command);
       if (next.conversationId) setConversationId(next.conversationId);
@@ -89,6 +87,7 @@ export function ChatWorkspace() {
       setBusy(false);
     }
   }
+  function keyDown(event:KeyboardEvent<HTMLTextAreaElement>){if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();event.currentTarget.form?.requestSubmit()}}
   async function approveTrade() {
     if (
       !result ||
@@ -328,6 +327,7 @@ export function ChatWorkspace() {
               id="chat-input"
               value={text}
               onChange={(event) => setText(event.target.value)}
+              onKeyDown={keyDown}
               placeholder="Ask about your portfolio, set a rule, or describe an onchain action…"
               rows={3}
             />
@@ -384,4 +384,8 @@ function humanize(value: string) {
     .replaceAll("_", " ")
     .replace(/^./, (letter) => letter.toUpperCase());
 }
+function postChat(body:unknown){return fetch("/backend/api/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})}
+async function safeJson(response:Response):Promise<unknown>{try{return await response.json()}catch{return{error:"invalid_response"}}}
+function isChatResult(value:unknown):value is ChatResult{return Boolean(value&&typeof value==="object"&&"kind"in value&&typeof(value as {kind?:unknown}).kind==="string")}
+function chatErrorMessage(value:unknown,status:number){if(value&&typeof value==="object"){const item=value as ChatError;if(typeof item.reason==="string")return item.reason;if(typeof item.error==="string")return humanize(item.error)}return`Command service returned HTTP ${status}. No transaction was submitted.`}
 function lifecycleState(input:{result:ChatResult|null;approval:ApprovalResult|null;busy:boolean;approving:boolean}){const memory=Boolean(input.result?.recalledMemory?.length);const research=Boolean(input.result&&"researchUsed"in input.result);const refused=input.result?.kind==="refused";const executed=Boolean(input.approval&&"audit"in input.approval);const approvalStopped=Boolean(input.approval&&!("audit"in input.approval));const details=["Intent bounded","Context recalled","Evidence gathered","Limits enforced","KeeperHub preview","Human gate","KeeperHub submit","Receipt trail"];return lifecycle.map((label,index)=>{let state:"complete"|"current"|"pending"|"stopped"="pending";if(input.busy||!input.result)state=index===0?"current":"pending";else if(refused)state=index<4?"complete":index===4?"stopped":"pending";else if(input.result.kind!=="preview")state=index===0||index===1&&memory||index===2&&research?"complete":index===3?"current":"pending";else if(executed)state="complete";else if(approvalStopped)state=index<6?"complete":index===6?"stopped":"pending";else if(input.approving)state=index<6?"complete":index===6?"current":"pending";else state=index<5?"complete":index===5?"current":"pending";return{label,state,detail:index===1&&!memory?"No relevant memory":index===2&&!research?"Not requested":details[index]!}})}
